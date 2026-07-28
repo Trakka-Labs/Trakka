@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Trakka Landing Page
 
 React + Vite + Tailwind CSS v4 (PWA-enabled) landing page for Trakka.
@@ -36,3 +37,7 @@ src/
 - No fabricated stats or testimonials — copy reflects Trakka's actual early-stage/pilot status, per product decisions made with the founder.
 - PWA manifest + service worker configured via `vite-plugin-pwa` in `vite.config.js`.
 - Replace `public/icon-192.png`, `icon-512.png`, `apple-touch-icon.png`, and `favicon.svg` with final brand assets when ready — current versions are placeholder-quality programmatic renders, not final logo art.
+=======
+# Trakka
+Trakka is a web-based logistics management platform that helps logistics businesses create, manage, track, and complete deliveries while giving customers real-time visibility into their packages through a unique WhatsApp tracking link.
+>>>>>>> 9ac7104614dae1ce2c51f89560baa82a6e6a55d1
