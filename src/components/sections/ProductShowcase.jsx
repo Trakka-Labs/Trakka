@@ -1,112 +1,90 @@
-import { Truck, Package, CheckCircle2, Clock } from 'lucide-react'
+import { Check, Clock3, MapPin, Navigation, PackageCheck, Smartphone } from 'lucide-react'
 import Container from '../ui/Container'
-import SectionHeading from '../ui/SectionHeading'
-import Reveal from '../ui/Reveal'
 
-const DASHBOARD_ROWS = [
-  { id: '#TRK-4471', route: 'Ikeja → Lekki Phase 1', driver: 'Adewale O.', status: 'En Route', tone: 'orange' },
-  { id: '#TRK-4470', route: 'Yaba → Victoria Island', driver: 'Chidi N.', status: 'Delivered', tone: 'mint' },
-  { id: '#TRK-4469', route: 'Surulere → Ajah', driver: 'Unassigned', status: 'Pending', tone: 'faint' },
-]
-
-const toneClass = {
-  orange: 'text-[var(--color-dispatch-orange-bright)]',
-  mint: 'text-[var(--color-mint)]',
-  faint: 'text-[var(--color-paper-faint)]',
-}
+const RIDER_STOPS = []
 
 export default function ProductShowcase() {
   return (
-    <section className="py-24 md:py-32">
+    <section className="py-24 md:py-36">
       <Container>
-        <SectionHeading
-          eyebrow="INSIDE THE PRODUCT"
-          title="Built for the person running dispatch — not for a demo reel."
-          align="center"
-          tone="emerald"
-        />
+        <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:items-end">
+          <div>
+            <p className="landing-kicker">Three views, one delivery</p>
+            <h2 className="mt-5 text-4xl font-medium leading-[1.02] tracking-[-0.05em] text-[var(--color-paper)] sm:text-5xl">
+              Each person sees only what they need.
+            </h2>
+          </div>
+          <p className="max-w-xl text-base leading-7 text-[var(--color-paper-dim)] lg:justify-self-end">
+            Fleet owners get control, riders get a fast mobile queue, and customers get a branded live map. All three stay attached to the same delivery record.
+          </p>
+        </div>
 
-        <div className="mt-16 grid lg:grid-cols-5 gap-6">
-          {/* Business dashboard mockup */}
-          <Reveal className="lg:col-span-3">
-            <div className="rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] overflow-hidden h-full">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-[var(--color-border-subtle)]">
-                <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-dispatch-orange)]/50" />
-                <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-paper-faint)]/30" />
-                <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-paper-faint)]/30" />
-                <span className="ml-3 font-mono text-xs text-[var(--color-paper-faint)]">
-                  dashboard.trakka.app
-                </span>
+        <div className="mt-16 grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
+          <article className="landing-product-frame overflow-hidden">
+            <div className="flex items-center justify-between border-b border-[var(--color-border-subtle)] px-5 py-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.15em] text-[var(--color-paper-faint)]">Owner dashboard</p>
+                <p className="mt-1 text-sm font-semibold text-[var(--color-paper)]">Dispatch queue · No orders</p>
               </div>
-
-              <div className="p-5 sm:p-6">
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  {[
-                    { label: 'Active', value: '18' },
-                    { label: 'Completed today', value: '42' },
-                    { label: 'Drivers online', value: '11' },
-                  ].map((stat) => (
-                    <div key={stat.label} className="rounded-xl bg-white/[0.03] p-4">
-                      <p className="font-mono text-2xl text-[var(--color-paper)]">{stat.value}</p>
-                      <p className="text-xs text-[var(--color-paper-faint)] mt-1">{stat.label}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="space-y-2">
-                  {DASHBOARD_ROWS.map((row) => (
-                    <div
-                      key={row.id}
-                      className="flex items-center justify-between rounded-xl bg-white/[0.02] px-4 py-3 text-sm"
-                    >
-                      <span className="font-mono text-[var(--color-paper-faint)] w-24">{row.id}</span>
-                      <span className="text-[var(--color-paper-dim)] hidden sm:block flex-1 px-3">{row.route}</span>
-                      <span className="text-[var(--color-paper-dim)] w-24 hidden md:block">{row.driver}</span>
-                      <span className={`font-mono text-xs ${toneClass[row.tone]}`}>{row.status}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <span className="rounded-md bg-[var(--soft-fill)] px-2.5 py-1 text-[10px] text-[var(--color-route-cyan)]">GRA zone</span>
             </div>
-          </Reveal>
-
-          {/* Tracking page mockup */}
-          <Reveal delay={120} className="lg:col-span-2">
-            <div className="rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] h-full p-6 flex flex-col">
-              <p className="font-mono text-xs text-[var(--color-paper-faint)] mb-5">CUSTOMER TRACKING PAGE</p>
-
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-full bg-[var(--color-emerald)]/20 flex items-center justify-center">
-                  <Truck size={18} className="text-[var(--color-mint)]" />
+            <div className="overflow-x-auto p-5">
+              <div className="min-w-[35rem]">
+                <div className="grid grid-cols-[1fr_1.4fr_1fr_0.8fr] border-b border-[var(--color-border-subtle)] pb-3 text-[10px] text-[var(--color-paper-faint)]">
+                  <span>TRACKING ID</span><span>ROUTE</span><span>PAYMENT</span><span>STATUS</span>
                 </div>
-                <div>
-                  <p className="text-sm text-[var(--color-paper)]">Adewale O.</p>
-                  <p className="text-xs text-[var(--color-paper-faint)]">Honda CB125 · ★ 4.9</p>
-                </div>
-              </div>
-
-              <div className="flex-1 rounded-xl bg-white/[0.03] flex items-center justify-center mb-6 relative overflow-hidden min-h-32">
-                <div className="absolute inset-0 opacity-20" style={{
-                  backgroundImage: 'radial-gradient(circle, var(--color-border-subtle) 1px, transparent 1px)',
-                  backgroundSize: '16px 16px'
-                }} />
-                <span className="relative w-3 h-3 rounded-full bg-[var(--color-dispatch-orange)] animate-pulse" />
-              </div>
-
-              <div className="space-y-3">
-                {[
-                  { icon: Package, label: 'Package Created', done: true },
-                  { icon: CheckCircle2, label: 'Driver Assigned', done: true },
-                  { icon: Clock, label: 'En Route · ETA 14 min', done: true, active: true },
-                ].map((row) => (
-                  <div key={row.label} className="flex items-center gap-2.5">
-                    <row.icon size={15} className={row.active ? 'text-[var(--color-dispatch-orange)]' : 'text-[var(--color-mint)]'} />
-                    <span className="text-xs text-[var(--color-paper-dim)]">{row.label}</span>
+                {[].map((row, index) => (
+                  <div key={row[0]} className="grid grid-cols-[1fr_1.4fr_1fr_0.8fr] items-center border-b border-[var(--color-border-subtle)] py-4 text-xs last:border-0">
+                    <span className="font-medium text-[var(--color-paper)]">{row[0]}</span>
+                    <span className="text-[var(--color-paper-dim)]">{row[1]}</span>
+                    <span className="text-[var(--color-paper-dim)]">{row[2]}</span>
+                    <span className={index === 0 ? 'text-[var(--color-emerald)]' : index === 2 ? 'text-[var(--color-route-cyan)]' : 'text-[var(--color-paper-faint)]'}>{row[3]}</span>
                   </div>
                 ))}
               </div>
             </div>
-          </Reveal>
+          </article>
+
+          <article className="landing-product-frame p-5 sm:p-6">
+            <div className="flex items-center gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--soft-fill)] text-[var(--color-route-cyan)]"><Smartphone size={17} /></span>
+              <div>
+                <p className="text-[10px] text-[var(--color-paper-faint)]">Rider portal</p>
+                <p className="text-sm font-semibold text-[var(--color-paper)]">No active route</p>
+              </div>
+            </div>
+            <div className="mt-6 space-y-2">
+              {RIDER_STOPS.map(([type, address, status], index) => (
+                <div key={address} className="flex items-center gap-3 rounded-lg bg-[var(--color-ink)] px-3 py-3">
+                  <span className={`grid h-7 w-7 place-items-center rounded-md ${index === 0 ? 'bg-[var(--color-emerald)] text-white' : 'bg-[var(--soft-fill)] text-[var(--color-route-cyan)]'}`}>
+                    {index === 0 ? <Check size={13} /> : <MapPin size={13} />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] text-[var(--color-paper-faint)]">{type}</p>
+                    <p className="truncate text-xs font-medium text-[var(--color-paper)]">{address}</p>
+                  </div>
+                  <span className="text-[9px] text-[var(--color-paper-faint)]">{status}</span>
+                </div>
+              ))}
+            </div>
+            <button type="button" className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--color-paper)] px-4 py-3 text-xs font-medium text-[var(--color-ink)]">
+              <Navigation size={14} /> Open route in Google Maps
+            </button>
+          </article>
+        </div>
+
+        <div className="mt-5 grid gap-5 sm:grid-cols-3">
+          {[
+            [Clock3, 'Live ETA', 'Updates when traffic, rain, checkpoints, or delays change the route.'],
+            [PackageCheck, 'Verified handoff', 'OTP or QR confirmation records time, location, and completion.'],
+            [Check, 'Payment flexibility', 'Sender paid or cash and transfer collection on delivery.'],
+          ].map(([Icon, title, body]) => (
+            <div key={title} className="border-t border-[var(--color-border-subtle)] pt-5">
+              <Icon size={17} className="text-[var(--color-dispatch-orange)]" />
+              <h3 className="mt-5 text-base font-medium text-[var(--color-paper)]">{title}</h3>
+              <p className="mt-2 text-sm leading-6 text-[var(--color-paper-dim)]">{body}</p>
+            </div>
+          ))}
         </div>
       </Container>
     </section>

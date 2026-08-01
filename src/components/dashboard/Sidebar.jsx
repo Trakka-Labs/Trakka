@@ -1,31 +1,42 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router'
 import { AnimatePresence, motion } from 'framer-motion'
-import { BarChart3, LayoutDashboard, Package, Route as RouteIcon, Settings, Users, Wallet, X } from 'lucide-react'
+import { BarChart3, LayoutDashboard, MessageSquareText, Package, Route as RouteIcon, Settings, Users, Wallet, X } from 'lucide-react'
 import Logo from '../ui/Logo'
 import { ROUTES } from '../../lib/routes'
 
 const NAV_ITEMS = [
-  { label: 'Dashboard', icon: LayoutDashboard, to: ROUTES.businessDashboard, active: true },
-  { label: 'Deliveries', icon: Package },
-  { label: 'Dispatch', icon: RouteIcon },
-  { label: 'Drivers', icon: Users },
+  { label: 'Dashboard', icon: LayoutDashboard, to: ROUTES.businessDashboard },
+  { label: 'Deliveries', icon: Package, to: ROUTES.businessDeliveries, matchChildren: true },
+  { label: 'Dispatch', icon: RouteIcon, to: ROUTES.businessDispatch },
+  { label: 'Drivers', icon: Users, to: ROUTES.businessDrivers },
+  { label: 'Communications', icon: MessageSquareText, to: ROUTES.businessCommunications },
   { label: 'Payments', icon: Wallet },
   { label: 'Analytics', icon: BarChart3 },
   { label: 'Settings', icon: Settings },
 ]
 
 function NavList({ onNavigate }) {
+  const location = useLocation()
+
   return (
     <nav className="flex flex-1 flex-col gap-1 px-3">
       {NAV_ITEMS.map((item) => {
         const Icon = item.icon
-        if (item.active) {
+        if (item.to) {
+          const isActive = item.matchChildren
+            ? location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)
+            : location.pathname === item.to
           return (
             <Link
               key={item.label}
               to={item.to}
               onClick={onNavigate}
-              className="flex items-center gap-3 rounded-xl bg-white/[0.06] px-3.5 py-2.5 text-sm font-medium text-[var(--color-paper)]"
+              aria-current={isActive ? 'page' : undefined}
+              className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-white/[0.06] text-[var(--color-paper)]'
+                  : 'text-[var(--color-paper-faint)] hover:bg-[var(--soft-hover)] hover:text-[var(--color-paper)]'
+              }`}
             >
               <Icon size={17} aria-hidden="true" />
               {item.label}
@@ -54,7 +65,7 @@ function NavList({ onNavigate }) {
 
 export function DesktopSidebar() {
   return (
-    <aside className="hidden w-64 shrink-0 flex-col border-r border-[var(--color-border-subtle)] bg-[var(--color-surface)]/60 py-6 lg:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden h-dvh w-64 flex-col overflow-hidden border-r border-[var(--color-border-subtle)] bg-[var(--color-surface)]/95 py-6 backdrop-blur-xl lg:flex">
       <Link to={ROUTES.home} className="mb-8 flex items-center gap-2.5 px-6">
         <Logo size={28} />
         <span className="font-display text-lg font-semibold text-[var(--color-paper)]">Trakka</span>

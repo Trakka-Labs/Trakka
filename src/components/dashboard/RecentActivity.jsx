@@ -3,6 +3,7 @@ import { Activity, CheckCircle2, CreditCard, PackageCheck, UserCheck } from 'luc
 import EmptyState from './EmptyState'
 
 const ICONS = {
+  order_created: Activity,
   trip_assigned: UserCheck,
   delivery_completed: PackageCheck,
   payment_received: CreditCard,
@@ -10,6 +11,7 @@ const ICONS = {
 }
 
 const TONES = {
+  order_created: 'bg-[var(--color-route-cyan)]/12 text-[var(--color-route-cyan)]',
   trip_assigned: 'bg-[var(--color-route-cyan)]/12 text-[var(--color-route-cyan)]',
   delivery_completed: 'bg-[var(--color-emerald)]/15 text-[var(--color-mint)]',
   payment_received: 'bg-[var(--color-dispatch-orange)]/12 text-[var(--color-dispatch-orange-bright)]',
@@ -28,7 +30,7 @@ export default function RecentActivity({ activity }) {
   }
 
   return (
-    <ol className="flex flex-col gap-1 rounded-3xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-3">
+    <ol className="flex flex-col gap-1 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-3">
       {activity.map((item, i) => {
         const Icon = ICONS[item.type] || CheckCircle2
         const tone = TONES[item.type] || 'bg-white/5 text-[var(--color-paper-dim)]'
@@ -38,7 +40,7 @@ export default function RecentActivity({ activity }) {
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3, delay: i * 0.05 }}
-            className="flex items-start gap-3 rounded-2xl px-3 py-3 transition-colors hover:bg-white/[0.02]"
+            className="flex items-start gap-3 rounded px-3 py-3 transition-colors hover:bg-[var(--soft-hover)]"
           >
             <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${tone}`}>
               <Icon size={14} aria-hidden="true" />

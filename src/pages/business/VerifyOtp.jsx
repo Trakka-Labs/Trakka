@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { ArrowLeft } from 'lucide-react'
 import AuthLayout from '../../components/auth/AuthLayout'
 import OtpInput from '../../components/ui/OtpInput'
 import Loader from '../../components/ui/Loader'
 import Alert from '../../components/ui/Alert'
 import { useCountdown } from '../../hooks/useCountdown'
-import { verifyOtp, requestPasswordReset, maskEmail, DEMO_OTP } from '../../lib/mockAuthApi'
+import { verifyOtp, requestPasswordReset, maskEmail } from '../../lib/api'
 import { ROUTES } from '../../lib/routes'
 
 const RESEND_SECONDS = 45
@@ -15,6 +15,7 @@ export default function VerifyOtp() {
   const location = useLocation()
   const navigate = useNavigate()
   const email = location.state?.email
+  const [localTestCode, setLocalTestCode] = useState(location.state?.localTestCode || '')
 
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
@@ -49,7 +50,8 @@ export default function VerifyOtp() {
     setError('')
     setResending(true)
     try {
-      await requestPasswordReset({ email })
+      const result = await requestPasswordReset({ email })
+      setLocalTestCode(result.localTestCode || '')
       setCode('')
       reset(RESEND_SECONDS)
     } catch (err) {
@@ -90,7 +92,11 @@ export default function VerifyOtp() {
           </div>
         )}
 
-        <p className="mt-3 font-mono text-xs text-[var(--color-paper-faint)]">Demo code: {DEMO_OTP}</p>
+        {localTestCode && (
+          <p className="mt-3 font-mono text-xs text-[var(--color-paper-faint)]">
+            Local test code: {localTestCode}
+          </p>
+        )}
 
         <div className="mt-8 flex items-center justify-between text-sm">
           <span className="text-[var(--color-paper-faint)]">

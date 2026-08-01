@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, Mail } from 'lucide-react'
@@ -10,7 +10,7 @@ import Button from '../../components/ui/Button'
 import Loader from '../../components/ui/Loader'
 import Alert from '../../components/ui/Alert'
 import { forgotPasswordSchema } from '../../lib/authSchemas'
-import { requestPasswordReset } from '../../lib/mockAuthApi'
+import { requestPasswordReset } from '../../lib/api'
 import { ROUTES } from '../../lib/routes'
 
 export default function ForgotPassword() {
@@ -29,8 +29,8 @@ export default function ForgotPassword() {
   const onSubmit = async ({ email }) => {
     setServerError('')
     try {
-      await requestPasswordReset({ email })
-      navigate(ROUTES.businessVerifyOtp, { state: { email } })
+      const result = await requestPasswordReset({ email })
+      navigate(ROUTES.businessVerifyOtp, { state: { email, localTestCode: result.localTestCode } })
     } catch (err) {
       setServerError(err.message || 'Something went wrong. Please try again.')
     }

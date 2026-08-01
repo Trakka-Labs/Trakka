@@ -3,8 +3,13 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.22.0"
+  },
   "scripts": {
     "dev": "vite",
+    "dev:backend": "npm --prefix backend run start:dev",
+    "delivery:create": "node --env-file-if-exists=automation/.env.local automation/create-delivery.js",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"
@@ -16,7 +21,7 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-hook-form": "^7.81.0",
-    "react-router-dom": "^7.18.1",
+    "react-router": "^8.3.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -26,9 +31,9 @@
     "@vitejs/plugin-react": "^6.0.3",
     "autoprefixer": "^10.5.2",
     "oxlint": "^1.71.0",
+    "playwright": "^1.62.1",
     "postcss": "^8.5.16",
     "tailwindcss": "^4.3.2",
-    "vite": "^8.1.1",
-    "vite-plugin-pwa": "^1.3.0"
+    "vite": "^8.1.1"
   }
 }

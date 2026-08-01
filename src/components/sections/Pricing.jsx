@@ -1,97 +1,73 @@
-import { Check } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { ArrowRight, Check } from 'lucide-react'
+import { Link } from 'react-router'
 import Container from '../ui/Container'
-import SectionHeading from '../ui/SectionHeading'
 import Button from '../ui/Button'
-import Badge from '../ui/Badge'
-import Reveal from '../ui/Reveal'
 
 const PLANS = [
   {
     name: 'Starter',
     price: '₦7,000',
-    period: '/month',
-    description: 'For small dispatch teams just getting off WhatsApp.',
-    features: ['Up to 3 drivers', 'Unlimited deliveries', 'Live GPS tracking', 'Customer tracking links'],
-    featured: false,
+    detail: 'For an owner moving a small team out of chat and notebooks.',
+    limits: 'Up to 3 drivers',
+    features: ['Unlimited delivery records', 'Live tracking links', 'Customer order form'],
   },
   {
     name: 'Growth',
     price: '₦15,000',
-    period: '/month',
-    description: 'For operators running daily, multi-driver dispatch.',
-    features: ['Up to 15 drivers', 'Everything in Starter', 'In-app payment collection', 'Business branding on tracking pages', 'Priority support'],
+    detail: 'For a multi-rider operation dispatching throughout the week.',
+    limits: 'Up to 15 drivers',
+    features: ['Everything in Starter', 'Payment collection workflows', 'Branded tracking pages'],
     featured: true,
   },
   {
     name: 'Fleet',
-    price: 'Custom',
-    period: '',
-    description: 'For 3PLs and haulage businesses with larger fleets.',
-    features: ['Unlimited drivers', 'Everything in Growth', 'Dedicated onboarding', 'Custom reporting'],
-    featured: false,
+    price: 'Let’s talk',
+    detail: 'For larger fleets that need a tailored rollout and reporting.',
+    limits: 'Custom driver count',
+    features: ['Everything in Growth', 'Dedicated onboarding', 'Custom reporting'],
   },
 ]
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="py-24 md:py-32">
+    <section id="pricing" className="py-24 md:py-36">
       <Container>
-        <SectionHeading
-          eyebrow="PRICING"
-          title="Simple, flat pricing. No per-trip surprises."
-          description="Every plan starts with a free trial — no card required to get your first deliveries moving."
-          align="center"
-        />
+        <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-end">
+          <div>
+            <p className="landing-kicker">Pricing</p>
+            <h2 className="mt-5 text-4xl font-medium leading-[1.02] tracking-[-0.05em] text-[var(--color-paper)] sm:text-5xl">
+              Flat monthly plans, built around fleet size.
+            </h2>
+          </div>
+          <p className="max-w-xl text-base leading-7 text-[var(--color-paper-dim)] lg:justify-self-end">
+            Start with 3–4 weeks free during the pilot. No per-trip fee surprises while you learn whether Trakka fits the way your team works.
+          </p>
+        </div>
 
-        <Reveal className="mt-6 flex justify-center">
-          <Badge tone="orange">3–4 WEEKS FREE, THEN PLANS FROM ₦7,000/MO</Badge>
-        </Reveal>
-
-        <div className="mt-14 grid md:grid-cols-3 gap-6 items-start">
-          {PLANS.map((plan, i) => (
-            <Reveal key={plan.name} delay={i * 100}>
-              <div
-                className={`relative rounded-2xl border p-7 h-full flex flex-col ${
-                  plan.featured
-                    ? 'border-[var(--color-dispatch-orange)]/50 bg-[var(--color-surface-raised)] md:-translate-y-4 shadow-[0_20px_60px_-20px_rgba(255,107,53,0.25)]'
-                    : 'border-[var(--color-border-subtle)] bg-[var(--color-surface)]'
-                }`}
-              >
-                {plan.featured && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[var(--color-dispatch-orange)] px-3 py-1 text-xs font-mono text-white">
-                    MOST POPULAR
-                  </span>
-                )}
-
-                <h3 className="font-display text-lg font-semibold text-[var(--color-paper)]">{plan.name}</h3>
-                <p className="mt-2 text-sm text-[var(--color-paper-dim)] min-h-10">{plan.description}</p>
-
-                <div className="mt-5 flex items-baseline gap-1">
-                  <span className="font-mono text-3xl text-[var(--color-paper)]">{plan.price}</span>
-                  <span className="text-sm text-[var(--color-paper-faint)]">{plan.period}</span>
-                </div>
-
-                <ul className="mt-6 space-y-3 flex-1">
-                  {plan.features.map((feat) => (
-                    <li key={feat} className="flex items-start gap-2.5 text-sm text-[var(--color-paper-dim)]">
-                      <Check size={16} className="text-[var(--color-mint)] flex-shrink-0 mt-0.5" />
-                      {feat}
-                    </li>
-                  ))}
-                </ul>
-
-                <Button
-                  as={Link}
-                  to="/get-started"
-                  variant={plan.featured ? 'primary' : 'secondary'}
-                  size="md"
-                  className="mt-7 w-full"
-                >
-                  {plan.price === 'Custom' ? 'Talk to us' : 'Start free trial'}
-                </Button>
+        <div className="mt-14 overflow-hidden rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
+          {PLANS.map((plan, index) => (
+            <article key={plan.name} className={`relative grid gap-7 p-7 sm:p-9 lg:grid-cols-[0.55fr_0.8fr_1fr_auto] lg:items-center ${index < PLANS.length - 1 ? 'border-b border-[var(--color-border-subtle)]' : ''} ${plan.featured ? 'bg-[var(--soft-fill)]' : ''}`}>
+              <div>
+                {plan.featured && <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-dispatch-orange)]">Recommended</p>}
+                <h3 className="text-lg font-medium text-[var(--color-paper)]">{plan.name}</h3>
+                <p className="mt-1 text-xs text-[var(--color-paper-faint)]">{plan.limits}</p>
               </div>
-            </Reveal>
+              <div>
+                <span className="text-3xl font-medium tracking-[-0.04em] text-[var(--color-paper)]">{plan.price}</span>
+                {plan.price.startsWith('₦') && <span className="ml-1 text-xs text-[var(--color-paper-faint)]">/ month</span>}
+                <p className="mt-2 max-w-xs text-xs leading-5 text-[var(--color-paper-dim)]">{plan.detail}</p>
+              </div>
+              <ul className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-center gap-2 text-xs text-[var(--color-paper-dim)]">
+                    <Check size={13} className="shrink-0 text-[var(--color-emerald)]" /> {feature}
+                  </li>
+                ))}
+              </ul>
+              <Button as={Link} to="/get-started" variant={plan.featured ? 'primary' : 'secondary'} size="sm" className="rounded-lg whitespace-nowrap">
+                {plan.price.startsWith('₦') ? 'Start free' : 'Contact us'} <ArrowRight size={14} />
+              </Button>
+            </article>
           ))}
         </div>
       </Container>

@@ -22,7 +22,14 @@ function EditButton({ onClick }) {
   )
 }
 
-export default function ReviewSummary({ companyInfo, paymentAccount, priceFloor, onEditStep }) {
+function formatNaira(value) {
+  if (typeof value !== 'number') return null
+  return new Intl.NumberFormat('en-NG', {
+    style: 'currency', currency: 'NGN', maximumFractionDigits: 0,
+  }).format(value)
+}
+
+export default function ReviewSummary({ companyInfo, paymentAccount, priceBaselines, onEditStep }) {
   return (
     <div className="flex flex-col gap-5">
       <section className="rounded-2xl border border-[var(--color-border-subtle)] bg-white/[0.02] p-5">
@@ -73,21 +80,13 @@ export default function ReviewSummary({ companyInfo, paymentAccount, priceFloor,
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Wallet size={17} className="text-[var(--color-dispatch-orange-bright)]" aria-hidden="true" />
-            <h3 className="font-display text-base font-semibold text-[var(--color-paper)]">Price floor</h3>
+            <h3 className="font-display text-base font-semibold text-[var(--color-paper)]">Price baselines</h3>
           </div>
           <EditButton onClick={() => onEditStep(3)} />
         </div>
         <div className="mt-3 divide-y divide-[var(--color-border-subtle)]">
-          <Row
-            label="Minimum delivery price"
-            value={
-              typeof priceFloor === 'number'
-                ? new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(
-                    priceFloor
-                  )
-                : null
-            }
-          />
+          <Row label="Normal delivery" value={formatNaira(priceBaselines?.normalPriceBaseline)} />
+          <Row label="Urgent delivery" value={formatNaira(priceBaselines?.urgentPriceBaseline)} />
         </div>
       </section>
     </div>

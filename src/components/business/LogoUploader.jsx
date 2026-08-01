@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Building2, Upload, X } from 'lucide-react'
 
 const MAX_SIZE_BYTES = 2 * 1024 * 1024
+const ALLOWED_TYPES = new Set(['image/png', 'image/jpeg'])
 
 export default function LogoUploader({ value, onChange, error = false }) {
   const inputRef = useRef(null)
@@ -12,7 +13,7 @@ export default function LogoUploader({ value, onChange, error = false }) {
     const file = files?.[0]
     if (!file) return
 
-    if (!file.type.startsWith('image/')) {
+    if (!ALLOWED_TYPES.has(file.type)) {
       setLocalError('Please upload a PNG or JPG image.')
       return
     }
@@ -23,7 +24,14 @@ export default function LogoUploader({ value, onChange, error = false }) {
 
     setLocalError('')
     const reader = new FileReader()
-    reader.onload = () => onChange(reader.result)
+    reader.onload = () => {
+      if (typeof reader.result === 'string' && /^data:image\/(?:png|jpeg);base64,/.test(reader.result)) {
+        onChange(reader.result)
+      } else {
+        setLocalError('The selected file is not a valid PNG or JPG image.')
+      }
+    }
+    reader.onerror = () => setLocalError('The image could not be read.')
     reader.readAsDataURL(file)
   }
 

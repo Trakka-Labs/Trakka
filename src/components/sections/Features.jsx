@@ -1,62 +1,119 @@
-import { ArrowUpRight, PackagePlus, MapPinned, CreditCard, LayoutDashboard } from 'lucide-react'
+import { ArrowDown, GripVertical, MessageCircle, ShieldCheck } from 'lucide-react'
 import Container from '../ui/Container'
-import SectionHeading from '../ui/SectionHeading'
-import Reveal from '../ui/Reveal'
 
-const FEATURES = [
+function OrderFormPreview() {
+  return (
+    <div className="landing-product-frame max-w-md">
+      <div className="border-b border-[var(--color-border-subtle)] px-5 py-4">
+        <p className="text-[10px] uppercase tracking-[0.15em] text-[var(--color-paper-faint)]">Business order form</p>
+        <p className="mt-1 text-sm font-semibold text-[var(--color-paper)]">Book a delivery</p>
+      </div>
+      <div className="space-y-4 p-5">
+        {[
+          ['Pickup address', 'Not entered'],
+          ['Delivery address', 'Not entered'],
+          ['Receiver', 'Not entered'],
+        ].map(([label, value]) => (
+          <div key={label}>
+            <p className="text-[10px] text-[var(--color-paper-faint)]">{label}</p>
+            <div className="mt-1.5 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-ink)] px-3 py-2.5 text-xs text-[var(--color-paper)]">{value}</div>
+          </div>
+        ))}
+        <div className="flex items-center justify-between rounded-lg border border-dashed border-[var(--color-route-cyan)]/50 bg-[var(--soft-fill)] px-3 py-3">
+          <span className="text-xs text-[var(--color-paper-dim)]">No package photo</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BatchingPreview() {
+  const stops = []
+  return (
+    <div className="landing-product-frame max-w-lg p-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.15em] text-[var(--color-paper-faint)]">Suggested batch</p>
+          <h3 className="mt-1 text-sm font-semibold text-[var(--color-paper)]">No batch selected</h3>
+        </div>
+      </div>
+      <ol className="mt-5 space-y-2">
+        {stops.map(([area, address, number]) => (
+          <li key={number} className="flex items-center gap-3 rounded-lg bg-[var(--color-ink)] px-3 py-3">
+            <GripVertical size={14} className="text-[var(--color-paper-faint)]" />
+            <span className="grid h-6 w-6 place-items-center rounded-md bg-[var(--soft-fill)] text-[10px] font-semibold text-[var(--color-route-cyan)]">{number}</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-[var(--color-paper)]">{area}</p>
+              <p className="mt-0.5 truncate text-[10px] text-[var(--color-paper-faint)]">{address}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <div className="mt-4 flex items-center justify-between border-t border-[var(--color-border-subtle)] pt-4">
+        <span className="flex items-center gap-2 text-[10px] text-[var(--color-paper-dim)]"><ShieldCheck size={13} className="text-[var(--color-emerald)]" /> Price floor protected</span>
+        <button type="button" className="rounded-lg bg-[var(--color-paper)] px-3 py-2 text-[10px] font-medium text-[var(--color-ink)]">Send to rider</button>
+      </div>
+    </div>
+  )
+}
+
+const SYSTEMS = [
   {
-    icon: PackagePlus,
-    title: 'Create & assign deliveries',
-    description: 'Enter pickup, drop-off, and receiver details, pick a delivery type and payment method, and assign a driver — all in one flow built for speed, not paperwork.',
+    index: 'A',
+    eyebrow: 'Zero-entry order intake',
+    title: 'The customer enters the details once.',
+    body: 'Share one reusable order link in WhatsApp. The customer adds pickup and drop-off addresses, receiver details, a package description, and a compressed photo from their browser. The verified order lands in your dispatch queue.',
+    note: 'No customer account. No app install. Fewer transcription errors.',
+    visual: <OrderFormPreview />,
   },
   {
-    icon: MapPinned,
-    title: 'Live GPS tracking',
-    description: 'Every delivery gets a unique tracking link and QR code the moment it\u2019s created. Customers watch their driver move on a live map — no login required.',
-  },
-  {
-    icon: CreditCard,
-    title: 'Flexible in-app payments',
-    description: 'Sender paid, receiver pays before dispatch, or receiver pays on delivery — all settled securely in-app, never cash-in-hand.',
-  },
-  {
-    icon: LayoutDashboard,
-    title: 'One dashboard for everything',
-    description: 'Revenue, active deliveries, driver status, trip history — filterable by driver, status, and date, so nothing falls through the cracks.',
+    index: 'B',
+    eyebrow: 'Margin and route control',
+    title: 'Protect the fee. Then protect the fuel.',
+    body: 'Trakka blocks bids below your minimum price floor. Accepted orders can then be grouped by neighborhood, manually reordered, and sent to a rider as one clear sequence.',
+    note: 'Designed for zone-based operations in Benin City.',
+    visual: <BatchingPreview />,
   },
 ]
 
 export default function Features() {
   return (
-    <section className="py-24 md:py-32">
+    <section className="py-24 md:py-36">
       <Container>
-        <SectionHeading
-          eyebrow="WHAT TRAKKA DOES"
-          title="Everything your dispatch operation actually needs — nothing it doesn't."
-          description="No AI gimmicks bolted on for marketing. Just the tools that get a package from pickup to a happy customer, reliably."
-        />
+        <div className="mb-20 grid gap-8 lg:grid-cols-[0.7fr_1.3fr] lg:items-end">
+          <p className="landing-kicker">The Trakka operating loop</p>
+          <h2 className="max-w-4xl text-4xl font-medium leading-[1.02] tracking-[-0.05em] text-[var(--color-paper)] sm:text-6xl">
+            Less data entry for the owner. More certainty for everyone else.
+          </h2>
+        </div>
 
-        <div className="mt-14 grid sm:grid-cols-2 gap-5">
-          {FEATURES.map((feature, i) => (
-            <Reveal key={feature.title} delay={i * 80}>
-              <div className="group relative rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-7 h-full transition-all duration-300 hover:border-[var(--color-emerald)]/50 hover:-translate-y-1">
-                <div className="flex items-start justify-between">
-                  <div className="w-11 h-11 rounded-xl bg-[var(--color-emerald)]/15 flex items-center justify-center">
-                    <feature.icon size={20} className="text-[var(--color-mint)]" strokeWidth={1.75} />
+        <div className="space-y-6">
+          {SYSTEMS.map((system, index) => (
+            <article key={system.index} className="grid overflow-hidden rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] lg:grid-cols-2">
+              <div className={`flex min-h-[31rem] items-center justify-center bg-[var(--color-ink-deep)] p-6 sm:p-10 ${index % 2 ? 'lg:order-2' : ''}`}>
+                {system.visual}
+              </div>
+              <div className="flex flex-col justify-between p-8 sm:p-12 lg:p-16">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="grid h-7 w-7 place-items-center rounded-md border border-[var(--color-border-subtle)] text-[10px] font-semibold text-[var(--color-route-cyan)]">{system.index}</span>
+                    <p className="text-xs font-medium text-[var(--color-route-cyan)]">{system.eyebrow}</p>
                   </div>
-                  <span className="w-8 h-8 rounded-full bg-[var(--color-dispatch-orange)]/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <ArrowUpRight size={15} className="text-white" />
-                  </span>
+                  <h3 className="mt-8 max-w-lg text-3xl font-medium leading-[1.06] tracking-[-0.04em] text-[var(--color-paper)] sm:text-4xl">{system.title}</h3>
+                  <p className="mt-6 max-w-xl text-base leading-7 text-[var(--color-paper-dim)]">{system.body}</p>
                 </div>
-                <h3 className="font-display text-xl font-semibold text-[var(--color-paper)] mt-6">
-                  {feature.title}
-                </h3>
-                <p className="mt-3 text-[var(--color-paper-dim)] leading-relaxed text-sm">
-                  {feature.description}
+                <p className="mt-12 flex items-start gap-3 border-t border-[var(--color-border-subtle)] pt-5 text-sm text-[var(--color-paper)]">
+                  <MessageCircle size={16} className="mt-0.5 shrink-0 text-[var(--color-dispatch-orange)]" />
+                  {system.note}
                 </p>
               </div>
-            </Reveal>
+            </article>
           ))}
+        </div>
+
+        <div className="mx-auto mt-8 flex w-fit items-center gap-2 text-xs text-[var(--color-paper-faint)]">
+          <ArrowDown size={13} />
+          From confirmed order to live tracking
         </div>
       </Container>
     </section>

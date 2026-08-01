@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { ArrowRight } from 'lucide-react'
 
 export default function RoleCard({ icon: Icon, title, description, primaryLabel, primaryTo, loginTo, accent = 'emerald', delay = 0 }) {

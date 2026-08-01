@@ -7,9 +7,9 @@ const Select = forwardRef(function Select({ className = '', error = false, child
       <select
         ref={ref}
         className={`
-          w-full appearance-none rounded-xl border bg-white/[0.03] px-4 py-3 pr-10 text-sm text-[var(--color-paper)]
+          w-full appearance-none rounded border bg-[var(--color-surface)] px-4 py-3 pr-10 text-sm text-[var(--color-paper)]
           outline-none transition-colors duration-200
-          focus:border-[var(--color-route-cyan)] focus:bg-white/[0.05]
+          focus:border-[var(--color-paper)] focus:ring-1 focus:ring-[var(--color-paper)]
           [&>option]:bg-[var(--color-surface)] [&>option]:text-[var(--color-paper)]
           ${error ? 'border-[var(--color-dispatch-orange)]' : 'border-[var(--color-border-subtle)]'}
           ${className}

@@ -2,7 +2,7 @@ import { forwardRef } from 'react'
 
 const variants = {
   primary:
-    'bg-[var(--color-dispatch-orange)] text-white hover:bg-[var(--color-dispatch-orange-bright)] shadow-[0_0_0_0_rgba(255,107,53,0)] hover:shadow-[0_8px_30px_-6px_rgba(255,107,53,0.5)]',
+    'bg-[var(--color-dispatch-orange)] text-white hover:bg-[var(--color-dispatch-orange-bright)]',
   secondary:
     'bg-transparent text-[var(--color-paper)] border border-[var(--color-border-subtle)] hover:border-[var(--color-paper-dim)] hover:bg-white/5',
   ghost:
@@ -23,8 +23,8 @@ const Button = forwardRef(function Button(
     <Comp
       ref={ref}
       className={`
-        inline-flex items-center justify-center gap-2 rounded-full font-medium
-        transition-all duration-300 ease-out
+        inline-flex items-center justify-center gap-2 rounded font-medium
+        transition-all duration-200 ease-out
         active:scale-[0.97]
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-dispatch-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-ink)]
         ${variants[variant]} ${sizes[size]} ${className}

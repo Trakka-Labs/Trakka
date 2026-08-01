@@ -9,7 +9,7 @@ import Checkbox from '../../../components/ui/Checkbox'
 import Button from '../../../components/ui/Button'
 import Loader from '../../../components/ui/Loader'
 import { businessSignupSchema } from '../../../lib/authSchemas'
-import { registerBusiness } from '../../../lib/mockAuthApi'
+import { registerBusiness } from '../../../lib/api'
 
 export default function SignupForm({ onSuccess, onError }) {
   const {
@@ -67,8 +67,10 @@ export default function SignupForm({ onSuccess, onError }) {
       <FormField label="Phone number" htmlFor="phone" error={errors.phone?.message} required>
         <Input
           icon={Phone}
-          type="tel"
-          placeholder="080 1234 5678"
+          type="text"
+          integerOnly
+          maxDigits={15}
+          placeholder="08012345678"
           autoComplete="tel"
           error={!!errors.phone}
           {...register('phone')}

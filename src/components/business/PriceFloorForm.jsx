@@ -14,29 +14,45 @@ export default function PriceFloorForm({ defaultValues, onSubmit, submitLabel = 
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(priceFloorSchema),
-    defaultValues: { minimumPrice: '', ...defaultValues },
+    defaultValues: { normalPriceBaseline: '', urgentPriceBaseline: '', ...defaultValues },
   })
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
       <div className="rounded-2xl border border-[var(--color-border-subtle)] bg-white/[0.02] p-4 text-sm text-[var(--color-paper-dim)]">
-        Set the lowest price any delivery can ever be booked at on Trakka. Negotiated or bid prices will never be
-        allowed to drop below this floor, protecting your margin on every job.
+        Set separate starting prices for batched and direct deliveries. Each delivery fee must meet the baseline for
+        its selected service, protecting your margin without pricing both services the same way.
       </div>
 
       <FormField
-        label="Minimum delivery price (₦)"
-        htmlFor="minimumPrice"
-        error={errors.minimumPrice?.message}
-        hint="Applies to every delivery across your business"
+        label="Normal delivery baseline (₦)"
+        htmlFor="normalPriceBaseline"
+        error={errors.normalPriceBaseline?.message}
+        hint="Minimum fee for normal, batched deliveries"
         required
       >
         <Input
           icon={Wallet}
-          inputMode="decimal"
+          integerOnly
           placeholder="1500"
-          error={!!errors.minimumPrice}
-          {...register('minimumPrice')}
+          error={!!errors.normalPriceBaseline}
+          {...register('normalPriceBaseline')}
+        />
+      </FormField>
+
+      <FormField
+        label="Urgent delivery baseline (₦)"
+        htmlFor="urgentPriceBaseline"
+        error={errors.urgentPriceBaseline?.message}
+        hint="Minimum fee for priority, direct deliveries"
+        required
+      >
+        <Input
+          icon={Wallet}
+          integerOnly
+          placeholder="3000"
+          error={!!errors.urgentPriceBaseline}
+          {...register('urgentPriceBaseline')}
         />
       </FormField>
 

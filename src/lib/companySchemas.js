@@ -3,7 +3,11 @@ import { emailField, phoneField } from './validators'
 
 export const companyInfoSchema = z.object({
   companyName: z.string().trim().min(2, 'Company name is required'),
-  logoUrl: z.string().nullable().optional(),
+  logoUrl: z
+    .string()
+    .regex(/^data:image\/(?:png|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/, 'Upload a PNG or JPEG image')
+    .nullable()
+    .optional(),
   phone: phoneField,
   email: emailField,
   address: z.string().trim().min(5, 'Business address is required'),
@@ -19,11 +23,21 @@ export const paymentAccountSchema = z.object({
 })
 
 export const priceFloorSchema = z.object({
-  minimumPrice: z
+  normalPriceBaseline: z
     .string()
     .trim()
-    .min(1, 'Minimum delivery price is required')
-    .regex(/^\d+(\.\d{1,2})?$/, 'Enter a valid amount')
-    .refine((v) => Number(v) > 0, { message: 'Minimum price must be greater than zero' })
+    .min(1, 'Normal delivery baseline is required')
+    .regex(/^\d+$/, 'Enter a whole-number amount')
+    .refine((v) => Number(v) > 0, { message: 'Normal baseline must be greater than zero' })
     .transform(Number),
+  urgentPriceBaseline: z
+    .string()
+    .trim()
+    .min(1, 'Urgent delivery baseline is required')
+    .regex(/^\d+$/, 'Enter a whole-number amount')
+    .refine((v) => Number(v) > 0, { message: 'Urgent baseline must be greater than zero' })
+    .transform(Number),
+}).refine((values) => values.urgentPriceBaseline >= values.normalPriceBaseline, {
+  path: ['urgentPriceBaseline'],
+  message: 'Urgent baseline cannot be below the normal baseline',
 })

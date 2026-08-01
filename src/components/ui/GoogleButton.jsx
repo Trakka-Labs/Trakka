@@ -16,7 +16,7 @@ export default function GoogleButton({ label = 'Continue with Google', loading =
     <button
       type="button"
       disabled={loading}
-      className="inline-flex w-full items-center justify-center gap-3 rounded-full border border-[var(--color-border-subtle)] bg-white/[0.03] px-6 py-3 text-sm font-medium text-[var(--color-paper)] transition-all duration-200 hover:border-[var(--color-paper-dim)] hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-route-cyan)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+      className="inline-flex w-full items-center justify-center gap-3 rounded border border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-6 py-3 text-sm font-medium text-[var(--color-paper)] transition-all duration-200 hover:border-[var(--color-paper-dim)] hover:bg-[var(--color-ink-deep)] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-route-cyan)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
       {...props}
     >
       {loading ? <Loader size={18} /> : <GoogleIcon />}
