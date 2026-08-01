@@ -20,7 +20,7 @@ import { ROUTES } from '../../lib/routes'
 
 const HERO_IMAGE = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDxluTgrnJjGXpqeeVD0AkZ2tnSJLSZL7Madn5vWAGR2pM8TEugtx8wFuN8AlgzKHRy7ssnibNa_lccEMpar2KUwIFeTJA_LUGCTe05km70X1JoUfgXwBquNzFkXIZ3OWxsipdO6hLWUA_52PxEfVOLFe_EtX5VmGQtnYwFcdIYKga434trJiO1TtbHNR91ac5LGXOZyVp0tNUVvHg6K085-Av3KBXB9FApPH0HrJXhOtnRjgbesI5Utw'
 const OPERATIONS_IMAGE = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAi65KGIgWEzN7PmkDeD7Tk54E0ALC8igxSf-ZQIr3QpLFG3dCvW4C0sj9N4FJoX87tLms3d-IE8ImsA0XvROrR3KCAIYztRhUtbSi_kLKU8Xwhre33tHwNvHV8uWYsgG5M8VDdpLQCgTi5DYGMXyovIeMzqxyk8mVZGW19Klg8gVRbpEjjiAaHpGetp538_R9ekqMXECMWF6WHsscqndPbDim8Cyl7lUUoMWMIlQlokUvUAe18Ci2AKg'
-const WORKFLOW_IMAGE = 'https://lh3.googleusercontent.com/aida/AP1WRLtSNpcOls7VUG9IoqpgHxZ408yCERtxUaeSRSP0UUXf5hAGPbruNIzAsO3NV2k7KAnE6nb1wQQ7fv83En3A-g4x_Ygbjmr7Ovmzg_qmWHSer2jhXv-bn2jghNrghNF9Ez3H465U3oVo64QIQyx7-mBfsQmqE2bInI9aJt329qxmLbhvhLQyXccP2rkBGgjKrKyqO7dFUJjtcR9rPXup-bDO-8c7HxVgSnHW12xNqi7X_4g7_w9CJelaJZQ'
+const WORKFLOW_IMAGE = '/images/rider-workflow.png'
 
 const NAV_ITEMS = [
   ['Solutions', 'solutions'],
