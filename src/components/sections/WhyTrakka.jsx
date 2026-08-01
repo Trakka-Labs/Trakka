@@ -1,60 +1,43 @@
-import { Check, X } from 'lucide-react'
+import { Check, Minus } from 'lucide-react'
 import Container from '../ui/Container'
-import SectionHeading from '../ui/SectionHeading'
-import Reveal from '../ui/Reveal'
 
 const ROWS = [
-  { label: 'Customer visibility into delivery status', old: false, trakka: true },
-  { label: 'Dispatch coordinated in one place', old: false, trakka: true },
-  { label: 'Customer needs to download an app', old: null, trakka: false },
-  { label: 'Payment collected securely, in-app', old: false, trakka: true },
-  { label: 'Proof of delivery on record', old: false, trakka: true },
+  ['Customer enters their own order details', false, true],
+  ['Minimum delivery fee is enforced', false, true],
+  ['Orders grouped into zone-based routes', false, true],
+  ['Rider works from a mobile browser', false, true],
+  ['Customer follows a live, no-login map', false, true],
+  ['Delivery completion has a recorded proof', false, true],
 ]
 
 export default function WhyTrakka() {
   return (
-    <section className="py-24 md:py-32 bg-[var(--color-ink-deep)]">
+    <section className="border-y border-[var(--color-border-subtle)] bg-[var(--color-surface)] py-24 md:py-32">
       <Container>
-        <SectionHeading
-          eyebrow="THE ALTERNATIVE"
-          title="Compared to running dispatch over WhatsApp and phone calls"
-          tone="orange"
-        />
+        <div className="grid gap-12 lg:grid-cols-[0.72fr_1.28fr] lg:gap-24">
+          <div>
+            <p className="landing-kicker">The difference</p>
+            <h2 className="mt-5 text-4xl font-medium leading-[1.02] tracking-[-0.05em] text-[var(--color-paper)] sm:text-5xl">
+              WhatsApp stays. The operational chaos does not.
+            </h2>
+            <p className="mt-6 max-w-md leading-7 text-[var(--color-paper-dim)]">
+              Trakka uses the channel customers already know, then gives every delivery a proper system of record behind it.
+            </p>
+          </div>
 
-        <Reveal>
-          <div className="mt-12 rounded-2xl border border-[var(--color-border-subtle)] overflow-hidden">
-            <div className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_140px_140px] bg-white/[0.02] px-5 sm:px-6 py-4 text-sm font-mono text-[var(--color-paper-faint)]">
-              <span>CAPABILITY</span>
-              <span className="text-center">WHATSAPP + CALLS</span>
-              <span className="text-center text-[var(--color-mint)]">TRAKKA</span>
+          <div className="overflow-hidden rounded-xl border border-[var(--color-border-subtle)]">
+            <div className="grid grid-cols-[1fr_5rem_5rem] border-b border-[var(--color-border-subtle)] bg-[var(--color-ink)] px-5 py-4 text-[10px] font-medium text-[var(--color-paper-faint)] sm:grid-cols-[1fr_9rem_9rem]">
+              <span>CAPABILITY</span><span className="text-center">CHAT ONLY</span><span className="text-center text-[var(--color-route-cyan)]">TRAKKA</span>
             </div>
-
-            {ROWS.map((row, i) => (
-              <div
-                key={row.label}
-                className={`grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_140px_140px] items-center px-5 sm:px-6 py-4 text-sm ${
-                  i % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.015]'
-                }`}
-              >
-                <span className="text-[var(--color-paper-dim)] pr-4">{row.label}</span>
-                <span className="flex justify-center">
-                  {row.old === false ? (
-                    <X size={16} className="text-[var(--color-paper-faint)]" />
-                  ) : (
-                    <span className="text-[var(--color-paper-faint)] text-xs">—</span>
-                  )}
-                </span>
-                <span className="flex justify-center">
-                  {row.trakka ? (
-                    <Check size={16} className="text-[var(--color-mint)]" />
-                  ) : (
-                    <X size={16} className="text-[var(--color-mint)]" />
-                  )}
-                </span>
+            {ROWS.map(([label], index) => (
+              <div key={label} className={`grid grid-cols-[1fr_5rem_5rem] items-center px-5 py-4 text-sm sm:grid-cols-[1fr_9rem_9rem] ${index < ROWS.length - 1 ? 'border-b border-[var(--color-border-subtle)]' : ''}`}>
+                <span className="pr-4 text-[var(--color-paper-dim)]">{label}</span>
+                <span className="flex justify-center"><Minus size={15} className="text-[var(--color-paper-faint)]" /></span>
+                <span className="flex justify-center"><Check size={15} strokeWidth={2.4} className="text-[var(--color-emerald)]" /></span>
               </div>
             ))}
           </div>
-        </Reveal>
+        </div>
       </Container>
     </section>
   )

@@ -12,8 +12,8 @@ export default function Logo({ className = '', size = 32 }) {
     >
       <defs>
         <linearGradient id="trakka-grad" x1="4" y1="4" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#2AA37A" />
-          <stop offset="100%" stopColor="#22D3EE" />
+          <stop offset="0%" stopColor="#008EBF" />
+          <stop offset="100%" stopColor="#0B1C30" />
         </linearGradient>
       </defs>
 
@@ -36,13 +36,13 @@ export default function Logo({ className = '', size = 32 }) {
       />
 
       {/* Static pin */}
-      <circle cx="11" cy="17.5" r="2.25" fill="#F3F1EA" />
+      <circle cx="11" cy="17.5" r="2.25" fill="var(--color-paper)" />
 
       {/* Moving dot with pulse animation */}
-      <circle cx="29" cy="17.5" r="2.75" fill="#FF6B35">
+      <circle cx="29" cy="17.5" r="2.75" fill="#FD761A">
         <animate attributeName="cx" values="11;29;11" dur="4.5s" repeatCount="indefinite" />
       </circle>
-      <circle cx="29" cy="17.5" r="5" fill="#FF6B35" fillOpacity="0.25">
+      <circle cx="29" cy="17.5" r="5" fill="#FD761A" fillOpacity="0.25">
         <animate attributeName="cx" values="11;29;11" dur="4.5s" repeatCount="indefinite" />
         <animate attributeName="r" values="3;6;3" dur="1.6s" repeatCount="indefinite" />
       </circle>

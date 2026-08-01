@@ -1,46 +1,47 @@
-import { PhoneCall, MessageSquareText, HelpCircle } from 'lucide-react'
 import Container from '../ui/Container'
-import Reveal from '../ui/Reveal'
-import RouteTicker from '../ui/RouteTicker'
 
-const PAINS = [
+const BOTTLENECKS = [
   {
-    icon: PhoneCall,
-    text: '"Where is my package?" calls flooding your one phone line, every single day.',
+    number: '01',
+    title: 'Order details copied by hand',
+    body: 'Addresses and phone numbers move from chat to paper to a spreadsheet. Every re-entry creates another chance for an expensive mistake.',
   },
   {
-    icon: MessageSquareText,
-    text: 'Dispatch coordinated over scattered WhatsApp groups, with no single source of truth.',
+    number: '02',
+    title: 'Riders double back across town',
+    body: 'Unbatched orders send riders across the same roads twice, burning fuel and making every ETA harder to defend.',
   },
   {
-    icon: HelpCircle,
-    text: 'No way to prove a delivery happened — or show a customer their driver is actually close.',
+    number: '03',
+    title: 'Customers call for every update',
+    body: 'Without a live view, the dispatch line becomes a tracking desk instead of a place to run the business.',
   },
 ]
 
 export default function ProblemStatement() {
   return (
-    <section id="product" className="py-24 md:py-32 relative">
-      <RouteTicker variant="divider" />
-      <Container className="pt-24 md:pt-32">
-        <Reveal>
-          <p className="font-mono text-xs text-[var(--color-dispatch-orange-bright)] tracking-widest mb-4">
-            THE PROBLEM
-          </p>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold text-[var(--color-paper)] max-w-2xl leading-[1.1]">
-            Most logistics businesses in Lagos are still running dispatch by phone call and guesswork.
-          </h2>
-        </Reveal>
+    <section id="product" className="border-y border-[var(--color-border-subtle)] bg-[var(--color-surface)] py-24 md:py-32">
+      <Container>
+        <div className="grid gap-12 lg:grid-cols-[0.72fr_1.28fr] lg:gap-24">
+          <div>
+            <p className="landing-kicker">The operational problem</p>
+            <h2 className="mt-5 max-w-lg text-4xl font-medium leading-[1.02] tracking-[-0.05em] text-[var(--color-paper)] sm:text-5xl">
+              Dispatch breaks down in the handoffs.
+            </h2>
+            <p className="mt-6 max-w-md leading-7 text-[var(--color-paper-dim)]">
+              Trakka focuses Phase 1 on the three bottlenecks fleet owners in Benin City feel every day.
+            </p>
+          </div>
 
-        <div className="mt-14 grid md:grid-cols-3 gap-6">
-          {PAINS.map((pain, i) => (
-            <Reveal key={pain.text} delay={i * 100}>
-              <div className="flex flex-col gap-4 p-6 rounded-2xl border border-[var(--color-border-subtle)] h-full">
-                <pain.icon className="text-[var(--color-dispatch-orange)]" size={26} strokeWidth={1.75} />
-                <p className="text-[var(--color-paper-dim)] leading-relaxed">{pain.text}</p>
-              </div>
-            </Reveal>
-          ))}
+          <ol className="border-t border-[var(--color-border-subtle)]">
+            {BOTTLENECKS.map((item) => (
+              <li key={item.number} className="grid gap-4 border-b border-[var(--color-border-subtle)] py-7 sm:grid-cols-[3.5rem_0.75fr_1fr] sm:items-start">
+                <span className="text-xs font-medium text-[var(--color-route-cyan)]">{item.number}</span>
+                <h3 className="text-lg font-medium text-[var(--color-paper)]">{item.title}</h3>
+                <p className="text-sm leading-6 text-[var(--color-paper-dim)]">{item.body}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </Container>
     </section>

@@ -9,8 +9,7 @@ export const emailField = z
 export const phoneField = z
   .string()
   .trim()
-  .min(10, 'Enter a valid phone number')
-  .regex(/^[0-9+\-\s()]+$/, 'Enter a valid phone number')
+  .regex(/^\d{10,15}$/, 'Enter a phone number containing 10 to 15 digits')
 
 export const passwordField = z
   .string()

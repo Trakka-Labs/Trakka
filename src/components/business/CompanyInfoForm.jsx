@@ -55,8 +55,10 @@ export default function CompanyInfoForm({ defaultValues, onSubmit, submitLabel =
         <FormField label="Business phone number" htmlFor="phone" error={errors.phone?.message} required>
           <Input
             icon={Phone}
-            type="tel"
-            placeholder="080 1234 5678"
+            type="text"
+            integerOnly
+            maxDigits={15}
+            placeholder="08012345678"
             autoComplete="tel"
             error={!!errors.phone}
             {...register('phone')}

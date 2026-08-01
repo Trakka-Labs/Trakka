@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import OnboardingLayout from '../../components/business/OnboardingLayout'
 import StepIndicator from '../../components/business/StepIndicator'
@@ -10,47 +10,72 @@ import ReviewSummary from '../../components/business/ReviewSummary'
 import Button from '../../components/ui/Button'
 import Loader from '../../components/ui/Loader'
 import Alert from '../../components/ui/Alert'
-import { getBusinessProfile, completeCompanySetup } from '../../lib/mockAuthApi'
-import { getSession, updateSession } from '../../lib/session'
+import { getBusinessProfile, getCurrentAccount, completeCompanySetup } from '../../lib/api'
 import { ROUTES } from '../../lib/routes'
 
 export default function CompanySetup() {
-  const location = useLocation()
   const navigate = useNavigate()
-
-  const [session] = useState(() => getSession())
-  const email = location.state?.email || session?.email
-  const [existingProfile] = useState(() => (email ? getBusinessProfile(email) : null))
-
+  const [loading, setLoading] = useState(true)
   const [step, setStep] = useState(1)
-  const [companyInfo, setCompanyInfo] = useState(() => ({
-    companyName: location.state?.companyName || existingProfile?.companyName || '',
-    logoUrl: existingProfile?.logoUrl || null,
-    phone: location.state?.phone || existingProfile?.phone || '',
-    email: email || '',
-    address: existingProfile?.address || '',
-    city: existingProfile?.city || '',
-    state: existingProfile?.state || '',
-    country: existingProfile?.country || 'Nigeria',
-  }))
-  const [paymentAccount, setPaymentAccount] = useState(existingProfile?.paymentAccount || null)
-  const [priceFloor, setPriceFloor] = useState(existingProfile?.priceFloor ?? null)
+  const [companyInfo, setCompanyInfo] = useState({
+    companyName: '',
+    logoUrl: null,
+    phone: '',
+    email: '',
+    address: '',
+    city: '',
+    state: '',
+    country: 'Nigeria',
+  })
+  const [paymentAccount, setPaymentAccount] = useState(null)
+  const [priceBaselines, setPriceBaselines] = useState(null)
   const [serverError, setServerError] = useState('')
   const [finishing, setFinishing] = useState(false)
 
-  // Company Setup is strictly one-time: no session sends you to login,
-  // and an already-onboarded session sends you straight to the dashboard.
   useEffect(() => {
-    if (!email) {
-      navigate(ROUTES.businessLogin, { replace: true })
-      return
+    let cancelled = false
+    Promise.all([getCurrentAccount(), getBusinessProfile()])
+      .then(([account, profile]) => {
+        if (cancelled) return
+        if (account.setupComplete) {
+          navigate(ROUTES.businessDashboard, { replace: true })
+          return
+        }
+        setCompanyInfo({
+          companyName: profile.companyName || account.companyName || '',
+          logoUrl: profile.logoUrl || null,
+          phone: (profile.phone || account.phone || '').replace(/\D/g, ''),
+          email: profile.email || account.email || '',
+          address: profile.address || '',
+          city: profile.city || '',
+          state: profile.state || '',
+          country: profile.country || 'Nigeria',
+        })
+        setPriceBaselines(
+          profile.normalPriceBaseline && profile.urgentPriceBaseline
+            ? {
+                normalPriceBaseline: profile.normalPriceBaseline,
+                urgentPriceBaseline: profile.urgentPriceBaseline,
+              }
+            : null,
+        )
+        setLoading(false)
+      })
+      .catch(() => navigate(ROUTES.businessLogin, { replace: true }))
+    return () => {
+      cancelled = true
     }
-    if (session?.setupComplete) {
-      navigate(ROUTES.businessDashboard, { replace: true })
-    }
-  }, [email, session, navigate])
+  }, [navigate])
 
-  if (!email || session?.setupComplete) return null
+  if (loading) {
+    return (
+      <OnboardingLayout>
+        <div className="flex min-h-80 items-center justify-center">
+          <Loader size={28} />
+        </div>
+      </OnboardingLayout>
+    )
+  }
 
   const handleCompanyInfoSubmit = (values) => {
     setCompanyInfo(values)
@@ -63,7 +88,7 @@ export default function CompanySetup() {
   }
 
   const handlePriceFloorSubmit = (values) => {
-    setPriceFloor(values.minimumPrice)
+    setPriceBaselines(values)
     setStep(4)
   }
 
@@ -71,8 +96,7 @@ export default function CompanySetup() {
     setServerError('')
     setFinishing(true)
     try {
-      const profile = await completeCompanySetup(email, { ...companyInfo, paymentAccount, priceFloor })
-      updateSession({ email, companyName: companyInfo.companyName, setupComplete: profile.setupComplete })
+      const profile = await completeCompanySetup({ ...companyInfo, paymentAccount, ...priceBaselines })
       if (profile.setupComplete) {
         navigate(ROUTES.businessDashboard, { replace: true })
       } else {
@@ -99,7 +123,7 @@ export default function CompanySetup() {
 
       <StepIndicator current={step} />
 
-      <div className="mt-8 rounded-3xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-6 sm:p-8">
+      <div className="mt-8 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-6 sm:p-8">
         {serverError && (
           <Alert tone="error" className="mb-5">
             {serverError}
@@ -140,7 +164,10 @@ export default function CompanySetup() {
               transition={{ duration: 0.25 }}
             >
               <PriceFloorForm
-                defaultValues={priceFloor ? { minimumPrice: String(priceFloor) } : undefined}
+                defaultValues={priceBaselines ? {
+                  normalPriceBaseline: String(priceBaselines.normalPriceBaseline),
+                  urgentPriceBaseline: String(priceBaselines.urgentPriceBaseline),
+                } : undefined}
                 onSubmit={handlePriceFloorSubmit}
                 submitLabel="Continue"
               />
@@ -158,7 +185,7 @@ export default function CompanySetup() {
               <ReviewSummary
                 companyInfo={companyInfo}
                 paymentAccount={paymentAccount}
-                priceFloor={priceFloor}
+                priceBaselines={priceBaselines}
                 onEditStep={setStep}
               />
               <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">

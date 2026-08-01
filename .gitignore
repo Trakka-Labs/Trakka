@@ -11,6 +11,22 @@ node_modules
 dist
 dist-ssr
 *.local
+.cache/trakka-delivery-browser/
+
+# Local environment files (keep shareable templates)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Vercel project metadata
+.vercel
+
+# Tool and test output
+.vite
+coverage
+playwright-report
+test-results
 
 # Editor directories and files
 .vscode/*

@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Mail } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import FormField from '../../../components/ui/FormField'
 import Input from '../../../components/ui/Input'
 import PasswordInput from '../../../components/ui/PasswordInput'
@@ -9,7 +9,7 @@ import Checkbox from '../../../components/ui/Checkbox'
 import Button from '../../../components/ui/Button'
 import Loader from '../../../components/ui/Loader'
 import { businessLoginSchema } from '../../../lib/authSchemas'
-import { loginBusiness } from '../../../lib/mockAuthApi'
+import { loginBusiness } from '../../../lib/api'
 import { ROUTES } from '../../../lib/routes'
 
 export default function LoginForm({ onSuccess, onError }) {
@@ -71,9 +71,6 @@ export default function LoginForm({ onSuccess, onError }) {
         )}
       </Button>
 
-      <p className="text-center font-mono text-xs text-[var(--color-paper-faint)]">
-        Demo: demo@trakka.africa / Trakka@123
-      </p>
     </form>
   )
 }

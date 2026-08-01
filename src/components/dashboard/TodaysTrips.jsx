@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { Package } from 'lucide-react'
 import Badge from '../ui/Badge'
 import EmptyState from './EmptyState'
-import { STATUS_META } from '../../lib/mockDashboardData'
+import { STATUS_META } from '../../lib/dashboardConfig'
 
 export default function TodaysTrips({ trips }) {
   if (!trips.length) {
@@ -16,7 +16,7 @@ export default function TodaysTrips({ trips }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
+    <div className="overflow-hidden rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
       <table className="hidden w-full text-left md:table">
         <thead>
           <tr className="border-b border-[var(--color-border-subtle)] text-xs uppercase tracking-wide text-[var(--color-paper-faint)]">
@@ -29,7 +29,7 @@ export default function TodaysTrips({ trips }) {
         </thead>
         <tbody>
           {trips.map((trip, i) => {
-            const meta = STATUS_META[trip.status]
+            const meta = STATUS_META[trip.status] || { label: trip.status, tone: 'neutral' }
             return (
               <motion.tr
                 key={trip.id}
@@ -53,7 +53,7 @@ export default function TodaysTrips({ trips }) {
 
       <div className="divide-y divide-[var(--color-border-subtle)] md:hidden">
         {trips.map((trip, i) => {
-          const meta = STATUS_META[trip.status]
+          const meta = STATUS_META[trip.status] || { label: trip.status, tone: 'neutral' }
           return (
             <motion.div
               key={trip.id}

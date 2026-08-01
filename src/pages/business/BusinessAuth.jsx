@@ -1,14 +1,12 @@
 import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import AuthLayout from '../../components/auth/AuthLayout'
 import AuthTabs from '../../components/auth/AuthTabs'
+import GoogleIdentityButton from '../../components/auth/GoogleIdentityButton'
 import Alert from '../../components/ui/Alert'
-import GoogleButton from '../../components/ui/GoogleButton'
 import SignupForm from './components/SignupForm'
 import LoginForm from './components/LoginForm'
-import { googleAuth } from '../../lib/mockAuthApi'
-import { setSession } from '../../lib/session'
 import { ROUTES } from '../../lib/routes'
 
 export default function BusinessAuth() {
@@ -17,7 +15,6 @@ export default function BusinessAuth() {
   const mode = location.pathname === ROUTES.businessLogin ? 'login' : 'signup'
 
   const [serverError, setServerError] = useState('')
-  const [googleLoading, setGoogleLoading] = useState(false)
 
   const switchMode = (next) => {
     if (next === mode) return
@@ -25,30 +22,13 @@ export default function BusinessAuth() {
     navigate(next === 'signup' ? ROUTES.businessSignup : ROUTES.businessLogin, { replace: true })
   }
 
-  // Routes a successful signup/login/Google auth to the right next step:
-  // first-time businesses go through Company Setup once; returning,
-  // already-onboarded businesses go straight to the Business Dashboard.
   const finalizeAuth = (account) => {
-    setSession({ email: account.email, companyName: account.companyName, setupComplete: account.setupComplete })
     if (account.setupComplete) {
       navigate(ROUTES.businessDashboard)
     } else {
       navigate(ROUTES.companySetup, {
         state: { email: account.email, companyName: account.companyName, phone: account.phone },
       })
-    }
-  }
-
-  const handleGoogle = async () => {
-    setServerError('')
-    setGoogleLoading(true)
-    try {
-      const account = await googleAuth({ intent: mode })
-      finalizeAuth(account)
-    } catch {
-      setServerError('Google sign-in failed. Please try again.')
-    } finally {
-      setGoogleLoading(false)
     }
   }
 
@@ -104,11 +84,7 @@ export default function BusinessAuth() {
           <span className="h-px flex-1 bg-[var(--color-border-subtle)]" />
         </div>
 
-        <GoogleButton
-          label={mode === 'signup' ? 'Sign up with Google' : 'Continue with Google'}
-          loading={googleLoading}
-          onClick={handleGoogle}
-        />
+        <GoogleIdentityButton intent={mode} onSuccess={finalizeAuth} onError={setServerError} />
 
         <p className="mt-8 text-center text-xs leading-relaxed text-[var(--color-paper-faint)]">
           By continuing, you agree to Trakka&apos;s{' '}

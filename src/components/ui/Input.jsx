@@ -1,6 +1,27 @@
 import { forwardRef } from 'react'
 
-const Input = forwardRef(function Input({ className = '', error = false, icon: Icon, ...props }, ref) {
+const Input = forwardRef(function Input(
+  {
+    className = '',
+    error = false,
+    icon: Icon,
+    integerOnly = false,
+    maxDigits,
+    inputMode,
+    pattern,
+    onChange,
+    ...props
+  },
+  ref,
+) {
+  const handleChange = (event) => {
+    if (integerOnly) {
+      const digits = event.currentTarget.value.replace(/\D/g, '')
+      event.currentTarget.value = maxDigits ? digits.slice(0, maxDigits) : digits
+    }
+    onChange?.(event)
+  }
+
   return (
     <div className="relative">
       {Icon && (
@@ -12,10 +33,13 @@ const Input = forwardRef(function Input({ className = '', error = false, icon: I
       )}
       <input
         ref={ref}
+        inputMode={integerOnly ? 'numeric' : inputMode}
+        pattern={integerOnly ? '[0-9]*' : pattern}
+        onChange={handleChange}
         className={`
-          w-full rounded-xl border bg-white/[0.03] py-3 text-sm text-[var(--color-paper)]
+          w-full rounded border bg-[var(--color-surface)] py-3 text-sm text-[var(--color-paper)]
           placeholder:text-[var(--color-paper-faint)] outline-none transition-colors duration-200
-          focus:border-[var(--color-route-cyan)] focus:bg-white/[0.05]
+          focus:border-[var(--color-paper)] focus:ring-1 focus:ring-[var(--color-paper)]
           ${Icon ? 'pl-11 pr-4' : 'px-4'}
           ${error ? 'border-[var(--color-dispatch-orange)]' : 'border-[var(--color-border-subtle)]'}
           ${className}

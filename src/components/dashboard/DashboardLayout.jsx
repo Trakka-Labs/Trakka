@@ -1,45 +1,49 @@
 import { useEffect, useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router'
 import { DesktopSidebar, MobileDrawer } from './Sidebar'
 import Topbar from './Topbar'
 import Loader from '../ui/Loader'
-import { getSession } from '../../lib/session'
+import { getCurrentAccount } from '../../lib/api'
 import { ROUTES } from '../../lib/routes'
 
 export default function DashboardLayout() {
-  const navigate = useNavigate()
-  const [session, setSession] = useState(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [session, setSession] = useState(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    const current = getSession()
-    if (!current?.email) {
-      navigate(ROUTES.businessLogin, { replace: true })
-      return
+    let cancelled = false
+    getCurrentAccount()
+      .then((account) => {
+        if (cancelled) return
+        if (!account.setupComplete) {
+          navigate(ROUTES.companySetup, { replace: true })
+          return
+        }
+        setSession(account)
+      })
+      .catch(() => navigate(ROUTES.businessLogin, { replace: true }))
+    return () => {
+      cancelled = true
     }
-    if (!current.setupComplete) {
-      navigate(ROUTES.companySetup, { replace: true })
-      return
-    }
-    setSession(current)
   }, [navigate])
 
   if (!session) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--color-ink)]">
-        <Loader size={28} className="text-[var(--color-paper-faint)]" />
+        <Loader size={28} />
       </div>
     )
   }
 
   return (
     <div className="flex min-h-screen bg-[var(--color-ink)]">
-      <DesktopSidebar />
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <DesktopSidebar />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col lg:ml-64">
         <Topbar companyName={session.companyName} onMenuClick={() => setDrawerOpen(true)} />
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-5 sm:px-6 lg:px-10 lg:py-8">
           <Outlet context={{ session }} />
         </main>
       </div>

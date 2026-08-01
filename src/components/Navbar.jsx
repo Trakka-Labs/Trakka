@@ -1,25 +1,24 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { Menu, X } from 'lucide-react'
 import Logo from './ui/Logo'
-import Button from './ui/Button'
-import Container from './ui/Container'
+import ThemeToggle from './ui/ThemeToggle'
 import { useActiveSection } from '../hooks/useActiveSection'
 
 const NAV_LINKS = [
   { id: 'product', label: 'Product' },
-  { id: 'how-it-works', label: 'How It Works' },
+  { id: 'how-it-works', label: 'Operating flow' },
   { id: 'pricing', label: 'Pricing' },
-  { id: 'faq', label: 'FAQ' },
+  { id: 'faq', label: 'Questions' },
 ]
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const activeId = useActiveSection(NAV_LINKS.map((l) => l.id))
+  const activeId = useActiveSection(NAV_LINKS.map((link) => link.id))
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 24)
+    const handleScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
@@ -30,33 +29,24 @@ export default function Navbar() {
   }
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'py-3' : 'py-5'
-      }`}
-    >
-      <Container>
-        <nav
-          className={`flex items-center justify-between rounded-2xl px-4 sm:px-5 py-3 transition-all duration-300 ${
-            scrolled ? 'glass-panel shadow-[0_8px_32px_-12px_rgba(0,0,0,0.5)]' : 'bg-transparent'
-          }`}
-        >
-          <a href="#top" className="flex items-center gap-2.5 group">
-            <Logo size={30} />
-            <span className="font-display text-lg font-semibold text-[var(--color-paper)]">
-              Trakka
-            </span>
+    <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? 'py-3' : 'py-5'}`}>
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
+        <nav className={`flex h-14 items-center justify-between px-3 transition-all duration-300 sm:px-4 ${scrolled ? 'rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)]/92 shadow-[var(--panel-shadow)] backdrop-blur-xl' : ''}`}>
+          <a href="#top" className="flex items-center gap-2.5">
+            <Logo size={28} />
+            <span className="text-base font-semibold tracking-[-0.03em] text-[var(--color-paper)]">Trakka</span>
           </a>
 
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden items-center gap-7 md:flex">
             {NAV_LINKS.map((link) => (
               <button
                 key={link.id}
+                type="button"
                 onClick={() => scrollTo(link.id)}
-                className={`px-4 py-2 text-sm rounded-full transition-colors duration-200 ${
+                className={`relative py-2 text-xs transition-colors ${
                   activeId === link.id
-                    ? 'text-[var(--color-paper)] bg-white/5'
-                    : 'text-[var(--color-paper-dim)] hover:text-[var(--color-paper)]'
+                    ? 'font-medium text-[var(--color-paper)] after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:bg-[var(--color-route-cyan)]'
+                    : 'text-[var(--color-paper-faint)] hover:text-[var(--color-paper)]'
                 }`}
               >
                 {link.label}
@@ -64,42 +54,35 @@ export default function Navbar() {
             ))}
           </div>
 
-          <div className="hidden md:flex items-center gap-3">
-            <Button as={Link} to="/business/login" variant="ghost" size="sm">Log in</Button>
-            <Button as={Link} to="/get-started" variant="primary" size="sm">
-              Start free trial
-            </Button>
+          <div className="hidden items-center gap-2 md:flex">
+            <ThemeToggle />
+            <Link to="/business/login" className="px-3 py-2 text-xs font-medium text-[var(--color-paper-dim)] transition-colors hover:text-[var(--color-paper)]">Log in</Link>
+            <Link to="/get-started" className="rounded-lg bg-[var(--color-paper)] px-4 py-2.5 text-xs font-medium text-[var(--color-ink)] transition-transform hover:-translate-y-0.5 active:translate-y-0">Join the pilot</Link>
           </div>
 
-          <button
-            className="md:hidden text-[var(--color-paper)] p-2"
-            onClick={() => setMobileOpen((v) => !v)}
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          <button type="button" className="grid h-9 w-9 place-items-center rounded-lg text-[var(--color-paper)] md:hidden" onClick={() => setMobileOpen((open) => !open)} aria-label="Toggle navigation" aria-expanded={mobileOpen}>
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </nav>
 
         {mobileOpen && (
-          <div className="md:hidden mt-2 glass-panel rounded-2xl p-4 flex flex-col gap-1 animate-[fade-up_0.3s_ease-out]">
+          <div className="mt-2 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-3 shadow-[var(--panel-shadow)] md:hidden">
             {NAV_LINKS.map((link) => (
-              <button
-                key={link.id}
-                onClick={() => scrollTo(link.id)}
-                className="text-left px-4 py-3 rounded-xl text-sm text-[var(--color-paper-dim)] hover:text-[var(--color-paper)] hover:bg-white/5"
-              >
+              <button key={link.id} type="button" onClick={() => scrollTo(link.id)} className="block w-full rounded-lg px-3 py-3 text-left text-sm text-[var(--color-paper-dim)] hover:bg-[var(--soft-hover)] hover:text-[var(--color-paper)]">
                 {link.label}
               </button>
             ))}
-            <div className="flex flex-col gap-2 mt-2 px-2">
-              <Button as={Link} to="/business/login" variant="secondary" size="sm">Log in</Button>
-              <Button as={Link} to="/get-started" variant="primary" size="sm">
-                Start free trial
-              </Button>
+            <div className="mt-2 flex items-center justify-between border-t border-[var(--color-border-subtle)] px-3 py-3">
+              <span className="text-xs text-[var(--color-paper-faint)]">Appearance</span>
+              <ThemeToggle />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Link to="/business/login" className="rounded-lg border border-[var(--color-border-subtle)] px-4 py-3 text-center text-xs font-medium text-[var(--color-paper)]">Log in</Link>
+              <Link to="/get-started" className="rounded-lg bg-[var(--color-paper)] px-4 py-3 text-center text-xs font-medium text-[var(--color-ink)]">Join the pilot</Link>
             </div>
           </div>
         )}
-      </Container>
+      </div>
     </header>
   )
 }

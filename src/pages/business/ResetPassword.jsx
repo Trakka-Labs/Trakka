@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, CheckCircle2 } from 'lucide-react'
@@ -11,7 +11,7 @@ import Button from '../../components/ui/Button'
 import Loader from '../../components/ui/Loader'
 import Alert from '../../components/ui/Alert'
 import { resetPasswordSchema } from '../../lib/authSchemas'
-import { resetPassword } from '../../lib/mockAuthApi'
+import { resetPassword } from '../../lib/api'
 import { ROUTES } from '../../lib/routes'
 
 export default function ResetPassword() {

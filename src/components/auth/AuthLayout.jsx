@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { motion } from 'framer-motion'
 import Logo from '../ui/Logo'
 import RouteTicker from '../ui/RouteTicker'
+import ThemeToggle from '../ui/ThemeToggle'
 import { ROUTES } from '../../lib/routes'
 
 const HIGHLIGHTS = [
@@ -15,15 +16,6 @@ export default function AuthLayout({ children, eyebrow = 'BUSINESS PORTAL' }) {
     <div className="flex min-h-screen bg-[var(--color-ink)]">
       {/* Branding panel */}
       <aside className="relative hidden overflow-hidden border-r border-[var(--color-border-subtle)] lg:flex lg:w-[44%] lg:flex-col lg:justify-between lg:p-12 xl:w-[40%] xl:p-16">
-        <div
-          className="absolute left-[-10%] top-[-20%] h-[500px] w-[500px] rounded-full bg-[var(--color-emerald)]/10 blur-[140px]"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute bottom-[-20%] right-[-10%] h-[400px] w-[400px] rounded-full bg-[var(--color-route-cyan)]/10 blur-[140px]"
-          aria-hidden="true"
-        />
-
         <Link to={ROUTES.home} className="relative z-10 flex items-center gap-2.5">
           <Logo size={32} />
           <span className="font-display text-xl font-semibold text-[var(--color-paper)]">Trakka</span>
@@ -54,11 +46,12 @@ export default function AuthLayout({ children, eyebrow = 'BUSINESS PORTAL' }) {
 
       {/* Form panel */}
       <main className="flex flex-1 flex-col">
-        <div className="flex items-center justify-between px-6 py-5 lg:hidden">
+        <div className="flex items-center justify-between px-6 py-5">
           <Link to={ROUTES.home} className="flex items-center gap-2.5">
             <Logo size={28} />
             <span className="font-display text-lg font-semibold text-[var(--color-paper)]">Trakka</span>
           </Link>
+          <ThemeToggle />
         </div>
 
         <div className="flex flex-1 items-center justify-center px-6 py-8 sm:py-12">
