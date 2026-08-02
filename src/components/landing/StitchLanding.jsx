@@ -202,7 +202,7 @@ function Workflow() {
     <section id="resources" className="bg-[var(--lp-surface)] py-20 sm:py-24">
       <div className="stitch-container grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <div>
-          <p className="stitch-label">Technology</p>
+         
           <h2 className="mt-4 text-4xl font-bold tracking-[-0.04em] text-[var(--lp-text)]">Rider workflow management</h2>
           <p className="mt-5 max-w-xl text-base leading-7 text-[var(--lp-muted)] sm:text-lg">
             Riders work from a fast mobile browser queue: accept or reject a trip, open the assigned route in Google Maps, and update delivery status while the customer follows the ETA.
@@ -247,7 +247,7 @@ function MvpCapabilities() {
     <section className="bg-[var(--lp-bg)] py-20 sm:py-24">
       <div className="stitch-container grid gap-12 lg:grid-cols-[0.7fr_1.3fr] lg:gap-16">
         <div>
-          <p className="stitch-label">MVP capability set</p>
+         
           <h2 className="mt-4 max-w-lg text-4xl font-bold tracking-[-0.04em] text-[var(--lp-text)]">More than a moving dot on a map</h2>
           <p className="mt-5 max-w-md text-base leading-7 text-[var(--lp-muted)]">
             Trakka keeps pricing, payment, route execution, customer visibility, and delivery proof attached to the same operating record.
