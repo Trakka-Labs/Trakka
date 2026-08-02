@@ -110,7 +110,7 @@ function Hero() {
         <div className="flex max-w-4xl flex-col items-center">
           <p className="mb-5 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[#ffb690]">Built for local fleet owners</p>
           <h1 className="text-[clamp(2.8rem,6vw,5rem)] font-bold leading-[1.04] tracking-[-0.045em] text-white">
-            Benin City delivery, optimized.
+            Intelligent Logistics Management Software for Dispatch Businesses in Nigeria
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-7 text-[#dce9ff] sm:text-lg">
             Receive orders through WhatsApp, protect your margins, group routes by neighborhood, and give every customer a live view of their delivery.
