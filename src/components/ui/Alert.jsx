@@ -14,10 +14,14 @@ const VARIANTS = {
     icon: Info,
     classes: 'bg-[var(--color-route-cyan)]/10 border-[var(--color-route-cyan)]/30 text-[var(--color-route-cyan)]',
   },
+  neutral: {
+    icon: Info,
+    classes: 'bg-white/[0.04] border-[var(--color-border-subtle)] text-[var(--color-paper-dim)]',
+  },
 }
 
 export default function Alert({ tone = 'error', children, className = '' }) {
-  const variant = VARIANTS[tone]
+  const variant = VARIANTS[tone] ?? VARIANTS.info
   const Icon = variant.icon
 
   return (

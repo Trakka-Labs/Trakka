@@ -17,6 +17,8 @@ export const ROUTES = {
   riderDashboard: '/rider/dashboard',
   riderRouteMessages: '/rider/routes/:routeRunId/messages',
   customerDashboard: '/customer/dashboard',
+  customerOrderIntake: '/order/:token',
+  customerTracking: '/track/:token',
   driverSignup: '/driver/signup',
   driverLogin: '/driver/login',
 }

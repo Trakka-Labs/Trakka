@@ -187,6 +187,112 @@ export function createDispatchBatches(orderIds) {
   })
 }
 
+// ------------------------------------------------------------------ tracking
+
+export function createOrderLink(payload = {}) {
+  return request('/tracking/order-links', {
+    method: 'POST',
+    body: json(payload),
+  })
+}
+
+export function getOrderLinks() {
+  return request('/tracking/order-links')
+}
+
+export function rotateOrderLink(linkId) {
+  return request(`/tracking/order-links/${encodeURIComponent(linkId)}/rotate`, {
+    method: 'POST',
+    body: '{}',
+  })
+}
+
+export function disableOrderLink(linkId) {
+  return request(`/tracking/order-links/${encodeURIComponent(linkId)}/disable`, {
+    method: 'POST',
+    body: '{}',
+  })
+}
+
+export function getTrackingAlerts() {
+  return request('/tracking/alerts')
+}
+
+export function shareRouteLinks(routeRunId, notify = false) {
+  return request(`/tracking/routes/${encodeURIComponent(routeRunId)}/share-links`, {
+    method: 'POST',
+    body: json({ notify }),
+  })
+}
+
+export function getIntakeConfig(token) {
+  return request(`/intake/${encodeURIComponent(token)}`)
+}
+
+export function submitCustomerOrder(token, payload) {
+  return request(`/intake/${encodeURIComponent(token)}`, {
+    method: 'POST',
+    body: json(payload),
+  })
+}
+
+export function getTracking(token) {
+  return request(`/track/${encodeURIComponent(token)}`)
+}
+
+// -------------------------------------------------------------- rider (ops)
+
+export function getRiderRoute(routeRunId, token) {
+  return request(`/rider/routes/${encodeURIComponent(routeRunId)}`, {
+    headers: { 'x-rider-route-token': token },
+  })
+}
+
+export function sendRiderPing(routeRunId, token, ping) {
+  return request(`/rider/routes/${encodeURIComponent(routeRunId)}/ping`, {
+    method: 'POST',
+    headers: { 'x-rider-route-token': token },
+    body: json(ping),
+  })
+}
+
+export function reportRiderDelay(routeRunId, token, reason, note) {
+  return request(`/rider/routes/${encodeURIComponent(routeRunId)}/delays`, {
+    method: 'POST',
+    headers: { 'x-rider-route-token': token },
+    body: json({ reason, note }),
+  })
+}
+
+export function prepareDeliveryVerification(routeRunId, token, orderId) {
+  return request(
+    `/rider/routes/${encodeURIComponent(routeRunId)}/tasks/${encodeURIComponent(orderId)}/prepare-delivery`,
+    { method: 'POST', headers: { 'x-rider-route-token': token }, body: '{}' },
+  )
+}
+
+export function verifyDeliveryOtp(routeRunId, token, orderId, otp) {
+  return request(
+    `/rider/routes/${encodeURIComponent(routeRunId)}/tasks/${encodeURIComponent(orderId)}/verify-delivery`,
+    {
+      method: 'POST',
+      headers: { 'x-rider-route-token': token },
+      body: json({ otp }),
+    },
+  )
+}
+
+export function updateStopStatus(routeRunId, token, orderId, status) {
+  return request(
+    `/rider/routes/${encodeURIComponent(routeRunId)}/tasks/${encodeURIComponent(orderId)}/status`,
+    {
+      method: 'POST',
+      headers: { 'x-rider-route-token': token },
+      body: json({ status }),
+    },
+  )
+}
+
 export function saveDispatchSequence(batchId, taskIds) {
   return request(`/dispatch/batches/${batchId}/sequence`, {
     method: 'PUT',

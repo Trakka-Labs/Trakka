@@ -6,10 +6,9 @@ import Button from '../../../components/ui/Button'
 import EmptyState from '../../../components/dashboard/EmptyState'
 import Loader from '../../../components/ui/Loader'
 import {
-  createRiderRouteAccess,
-  getBusinessRouteMessages,
-  getCommunicationRoutes,
-  sendBusinessRouteMessage,
+  createOrderLink, createRiderRouteAccess, disableOrderLink, getOrderLinks,
+  getBusinessRouteMessages, getCommunicationRoutes, getTrackingAlerts,
+  rotateOrderLink, sendBusinessRouteMessage, shareRouteLinks,
 } from '../../../lib/api'
 import { riderRouteMessagesRoute } from '../../../lib/routes'
 
@@ -34,7 +33,86 @@ export default function Communications() {
   const [accessLink, setAccessLink] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState('')
+  const [orderLink, setOrderLink] = useState(null)
+  const [alerts, setAlerts] = useState([])
+  const [sharedLinks, setSharedLinks] = useState([])
   const endRef = useRef(null)
+
+  const loadAlerts = useCallback(async () => {
+    try {
+      const result = await getTrackingAlerts()
+      setAlerts(result.alerts ?? [])
+    } catch {
+      setAlerts([])
+    }
+  }, [])
+
+  const loadOrderLinks = useCallback(async () => {
+    try {
+      const result = await getOrderLinks()
+      const active = (result.links ?? []).find((link) => link.status === 'active')
+      // A freshly created/rotated link carries its plaintext token; never clobber
+      // it with the list result, which only ever contains the token prefix.
+      setOrderLink((current) => (current?.token ? current : active ?? null))
+    } catch {
+      setOrderLink(null)
+    }
+  }, [])
+
+  const generateOrderLink = async () => {
+    setBusy('order-link')
+    try {
+      const result = await createOrderLink({})
+      setOrderLink(result.link)
+      copyLink(intakeUrl(result.link.token))
+      await loadOrderLinks()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy('')
+    }
+  }
+
+  const rotateLink = async () => {
+    if (!orderLink) return
+    setBusy('order-link')
+    try {
+      const result = await rotateOrderLink(orderLink.id)
+      setOrderLink(result.link)
+      copyLink(intakeUrl(result.link.token))
+      await loadOrderLinks()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy('')
+    }
+  }
+
+  const retireLink = async () => {
+    if (!orderLink) return
+    setBusy('order-link')
+    try {
+      await disableOrderLink(orderLink.id)
+      setOrderLink(null)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy('')
+    }
+  }
+
+  const shareTrackingLinks = async (notify) => {
+    setBusy('share-links')
+    setError('')
+    try {
+      const result = await shareRouteLinks(selectedId, notify)
+      setSharedLinks(result.links)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy('')
+    }
+  }
 
   const loadRoutes = useCallback(async () => {
     const result = await getCommunicationRoutes()
@@ -111,6 +189,23 @@ export default function Communications() {
     window.setTimeout(() => setBusy(''), 1500)
   }
 
+  const intakeUrl = (token) => `${window.location.origin}/order/${token}`
+
+  const copyLink = async (url) => {
+    try {
+      await navigator.clipboard.writeText(url)
+      setBusy('link-copied')
+      window.setTimeout(() => setBusy(''), 1500)
+    } catch {
+      setError('Could not copy the link automatically — copy it from the field instead.')
+    }
+  }
+
+  useEffect(() => {
+    loadOrderLinks()
+    loadAlerts()
+  }, [loadAlerts, loadOrderLinks])
+
   if (!routes && !error) {
     return <div className="flex min-h-80 items-center justify-center"><Loader size={28} /></div>
   }
@@ -133,6 +228,65 @@ export default function Communications() {
       </header>
 
       {error && <Alert tone="error" className="mb-5">{error}</Alert>}
+
+      <section className="dashboard-panel mb-5 rounded-lg p-5">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div>
+            <p className="text-xs font-medium text-[var(--color-route-cyan)]">WhatsApp order intake</p>
+            <h2 className="mt-1 text-sm font-semibold text-[var(--color-paper)]">Customer self-service order link</h2>
+            <p className="mt-1 max-w-xl text-xs text-[var(--color-paper-faint)]">
+              Share this link on WhatsApp or your status. Customers order without an account and each parcel gets its own secure tracking link.
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {orderLink ? (
+              <>
+                <Button type="button" size="sm" onClick={rotateLink} disabled={busy === 'order-link'}>
+                  <RefreshCw size={13} /> {busy === 'order-link' ? 'Working…' : 'Rotate link'}
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => copyLink(intakeUrl(orderLink.token))}>
+                  <Copy size={13} /> {busy === 'link-copied' ? 'Copied' : 'Copy link'}
+                </Button>
+                <Button type="button" size="sm" variant="secondary" onClick={retireLink}>
+                  Retire
+                </Button>
+              </>
+            ) : (
+              <Button type="button" size="sm" onClick={generateOrderLink} disabled={busy === 'order-link'}>
+                <Link2 size={13} /> {busy === 'order-link' ? 'Creating…' : 'Create order link'}
+              </Button>
+            )}
+          </div>
+        </div>
+        {orderLink?.token && (
+          <div className="mt-3 flex flex-col gap-2 border border-[var(--color-border-subtle)] bg-[var(--soft-fill)] px-4 py-3 sm:flex-row sm:items-center">
+            <p className="min-w-0 flex-1 truncate font-mono text-[10px] text-[var(--color-paper-dim)]">{intakeUrl(orderLink.token)}</p>
+            <a
+              className="shrink-0 text-xs font-medium text-[var(--color-route-cyan)]"
+              href={`https://wa.me/?text=${encodeURIComponent('Order a delivery from us in seconds: ' + intakeUrl(orderLink.token))}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Share on WhatsApp →
+            </a>
+          </div>
+        )}
+      </section>
+
+      {alerts.length > 0 && (
+        <section className="mb-5 space-y-2">
+          <p className="text-xs font-semibold text-[var(--color-paper)]">Live tracking alerts</p>
+          {alerts.slice(0, 5).map((alert) => (
+            <div key={alert.id} className="flex items-center gap-3 rounded border border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-4 py-2.5">
+              <Badge tone={alert.eventType === 'route.off_route' || alert.eventType === 'route.delay_reported' ? 'orange' : 'cyan'}>
+                {alert.eventType.replace('route.', '').replace('order.', '')}
+              </Badge>
+              <p className="min-w-0 flex-1 truncate text-xs text-[var(--color-paper-dim)]">{alert.payload.reason ?? alert.eventType}</p>
+              <span className="shrink-0 font-mono text-[9px] text-[var(--color-paper-faint)]">{time(alert.occurredAt)}</span>
+            </div>
+          ))}
+        </section>
+      )}
 
       {routes?.length === 0 ? (
         <EmptyState
@@ -254,6 +408,46 @@ export default function Communications() {
               <div className="grid flex-1 place-items-center"><Loader size={24} /></div>
             )}
           </div>
+        </section>
+      )}
+
+      {selectedId && conversation && (
+        <section className="dashboard-panel mt-5 rounded-lg p-5">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div>
+              <p className="text-xs font-medium text-[var(--color-route-cyan)]">Customer tracking</p>
+              <h2 className="mt-1 text-sm font-semibold text-[var(--color-paper)]">Share live tracking links</h2>
+              <p className="mt-1 max-w-xl text-xs text-[var(--color-paper-faint)]">
+                Mint a fresh per-parcel tracking link for every pending customer on {selectedId.slice(0, 12)} and optionally blast it over WhatsApp.
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Button type="button" size="sm" onClick={() => shareTrackingLinks(false)} disabled={busy === 'share-links'}>
+                <Link2 size={13} /> Mint links
+              </Button>
+              <Button type="button" size="sm" variant="secondary" onClick={() => shareTrackingLinks(true)} disabled={busy === 'share-links'}>
+                {busy === 'share-links' ? <Loader size={13} /> : 'Mint + notify'}
+              </Button>
+            </div>
+          </div>
+          {sharedLinks.length > 0 && (
+            <div className="mt-3 space-y-1.5">
+              {sharedLinks.map((link) => (
+                <div key={link.orderId} className="flex items-center gap-3 rounded border border-[var(--color-border-subtle)] px-3 py-2">
+                  <span className="shrink-0 font-mono text-[10px] text-[var(--color-route-cyan)]">{link.trackingId}</span>
+                  <p className="min-w-0 flex-1 truncate font-mono text-[10px] text-[var(--color-paper-faint)]">{link.url}</p>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(link.url)}
+                    className="shrink-0 text-[var(--color-paper-dim)] hover:text-[var(--color-paper)]"
+                    aria-label="Copy tracking link"
+                  >
+                    <Copy size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
     </div>

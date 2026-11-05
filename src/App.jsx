@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router'
 import Loader from './components/ui/Loader'
+import ErrorBoundary from './components/ui/ErrorBoundary'
 import { ROUTES } from './lib/routes'
 
 const Landing = lazy(() => import('./pages/Landing'))
@@ -20,6 +21,8 @@ const Drivers = lazy(() => import('./pages/business/dashboard/Drivers'))
 const Communications = lazy(() => import('./pages/business/dashboard/Communications'))
 const RiderDashboard = lazy(() => import('./pages/rider/RiderDashboard'))
 const RiderRouteMessages = lazy(() => import('./pages/rider/RiderRouteMessages'))
+const CustomerOrderForm = lazy(() => import('./pages/customer/CustomerOrderForm'))
+const TrackingPage = lazy(() => import('./pages/customer/TrackingPage'))
 const CustomerDashboard = lazy(() => import('./pages/customer/CustomerDashboard'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
@@ -33,7 +36,8 @@ function RouteFallback() {
 
 export function AppRoutes() {
   return (
-    <Suspense fallback={<RouteFallback />}>
+    <ErrorBoundary>
+      <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path={ROUTES.home} element={<Landing />} />
         <Route path={ROUTES.getStarted} element={<GetStarted />} />
@@ -66,10 +70,13 @@ export function AppRoutes() {
         </Route>
         <Route path={ROUTES.riderDashboard} element={<RiderDashboard />} />
         <Route path={ROUTES.riderRouteMessages} element={<RiderRouteMessages />} />
+        <Route path={ROUTES.customerOrderIntake} element={<CustomerOrderForm />} />
+        <Route path={ROUTES.customerTracking} element={<TrackingPage />} />
         <Route path={ROUTES.customerDashboard} element={<CustomerDashboard />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </Suspense>
+      </Suspense>
+    </ErrorBoundary>
   )
 }
 
