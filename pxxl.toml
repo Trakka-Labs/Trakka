@@ -1,0 +1,25 @@
+# Pxxl deployment configuration for the Trakka React frontend (Vite SPA).
+# Docs: https://docs.pxxl.app/api/pxxl-toml
+
+version = 1
+
+[build]
+language = "javascript"
+framework = "vite"
+packageManager = "npm"
+runtimeVersion = "22"
+installCommand = "npm ci"
+buildCommand = "npm run build"
+outputDirectory = "dist"
+
+[routing]
+# Serve index.html for all extensionless app paths (client-side routes like
+# /track/:token, /order/:token, /rider/routes/:id/messages).
+spa = true
+
+# Proxy API calls to the deployed backend so the browser sees a same-origin
+# /api/v1 — this keeps the backend's host-only, SameSite=Lax auth cookies
+# first-party to www.trakka.online (no CORS / third-party-cookie issues).
+[[rewrites]]
+source = "/api/:path*"
+destination = "https://trakka-backend.pxxlspace.cv/api/:path*"
