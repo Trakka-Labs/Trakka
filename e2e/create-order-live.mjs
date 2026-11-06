@@ -1,22 +1,23 @@
 /**
- * Visible (non-headless) demo automation: create a delivery order.
- *
- * Assumes the user is already logged in — a persistent profile is used, so
- * the first run may need a one-time manual login (the script waits for it).
- * Every field is typed with a visible keystroke delay so a human watching the
- * window sees the information being entered.
+ * Visible (non-headless) automation for the Trakka dashboard.
+ * On first load it asks which flow to run: create delivery, or create driver.
+ * A persistent profile keeps the login; the first run may need a one-time
+ * manual login (the script waits for it). Fields are typed with a visible
+ * keystroke delay so a human watching the window sees every input.
  *
  * Run:  node e2e/create-order-live.mjs
  * Env:  E2E_APP_URL        (default https://www.trakka.online)
  *       E2E_BROWSER_PATH   (default: system Brave/Chrome, via browser.mjs)
  *       E2E_PROFILE_DIR    (default ~/.trakka-automation-profile)
  *       E2E_PHOTO          optional path to a package photo (JPEG/PNG/WebP, <2 MB)
+ *       E2E_TASK           optional "delivery" | "driver" to skip the prompt
  */
 import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
+import { createInterface } from 'node:readline/promises'
 import puppeteer from 'puppeteer-core'
-import { browserExecutable, expect, waitForText } from './browser.mjs'
+import { browserExecutable, expect } from './browser.mjs'
 
 const APP_URL = (process.env.E2E_APP_URL || 'https://www.trakka.online').replace(/\/$/, '')
 const appUrl = (path = '/') => `${APP_URL}${path}`
@@ -29,6 +30,31 @@ const PROFILE_DIR = process.env.E2E_PROFILE_DIR
   : join(homedir(), '.trakka-automation-profile')
 
 const PHOTO = process.env.E2E_PHOTO ? resolve(process.env.E2E_PHOTO) : null
+
+// ------------------------------------------------------------ driver payload
+
+const DRIVER = {
+  displayName: 'Osaze Iyamu',
+  phone: '08031459029',
+  capacity: '12',
+}
+
+async function askTask() {
+  const forced = process.env.E2E_TASK?.toLowerCase()
+  if (forced === 'delivery' || forced === 'driver') return forced
+  const readline = createInterface({ input: process.stdin, output: process.stdout })
+  try {
+    const answer = (
+      await readline.question(
+        'What should this automation run?\n  1) Create a delivery order\n  2) Create (onboard) a driver\nChoice [1]: ',
+      )
+    ).trim()
+    return answer === '2' ? 'driver' : 'delivery'
+  } finally {
+    readline.close()
+  }
+}
+
 
 // ------------------------------------------------------------ order payload
 
@@ -50,6 +76,15 @@ const ORDER = {
 
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms))
 
+/** Wait until the rendered page contains the given text. */
+async function waitForText(page, text, timeout = 15_000) {
+  await page.waitForFunction(
+    (target) => document.body?.innerText.includes(target),
+    { timeout, polling: 250 },
+    text,
+  )
+}
+
 // ------------------------------------------------------- visible primitives
 
 async function scrollToField(page, selector) {
@@ -63,7 +98,21 @@ async function scrollToField(page, selector) {
 /** Focus a control and type with a visible keystroke delay. */
 async function typeVisible(page, selector, value) {
   await scrollToField(page, selector)
-  await page.click(selector, { clickCount: 3 }) // select existing content, if any
+  // Clear any prefilled value deterministically (e.g. the Capacity input
+  // defaults to "10") before typing, so we append nothing to existing digits.
+  await page.focus(selector)
+  await page.evaluate((target) => {
+    const control = document.querySelector(target)
+    if (!control) return
+    const proto = control.tagName === 'TEXTAREA'
+      ? window.HTMLTextAreaElement.prototype
+      : window.HTMLInputElement.prototype
+    const setValue = Object.getOwnPropertyDescriptor(proto, 'value').set
+    setValue.call(control, '')
+    control.dispatchEvent(new Event('input', { bubbles: true }))
+    control.dispatchEvent(new Event('change', { bubbles: true }))
+  }, selector)
+  await sleep(150)
   if (value) {
     await page.type(selector, value, { delay: VIEW_DELAY_MS })
   }
@@ -109,30 +158,95 @@ const browser = await puppeteer.launch({
   headless: false, // always visible — this is the point of the script
   slowMo: 60,
   userDataDir: PROFILE_DIR, // persisted login across runs
-  args: ['--no-sandbox', '--disable-dev-shm-usage', '--window-size=1280,1000'],
+  args: [
+    '--no-sandbox',
+    '--disable-dev-shm-usage',
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--disable-features=BraveWelcome,BraveVPN,BraveWallet,BraveAIAPI,BraveNews',
+    '--window-size=1280,1000',
+  ],
   defaultViewport: null, // use the real window size
 })
 
 try {
-  const page = (await browser.pages())[0] ?? (await browser.newPage())
+  // Always drive an explicitly created, foregrounded tab — never assume the
+  // browser's initial tab is the visible one (Brave's welcome/first-run tabs
+  // and preexisting about:blank tabs differ across profiles).
+  const page = await browser.newPage()
+  await page.bringToFront()
 
-  // 1. Open the create-delivery page and make sure we are authenticated.
-  await page.goto(appUrl('/business/deliveries/new'), { waitUntil: 'domcontentloaded' })
-  await sleep(1_000)
+  // Surface the browser-side console so a blank page is never silent.
+  page.on('console', (message) => {
+    if (['error', 'warning'].includes(message.type())) console.log(`[console] ${message.type()}: ${message.text()}`)
+  })
+  page.on('pageerror', (error) => console.log(`[pageerror] ${error.message}`))
+  page.on('response', async (response) => {
+    if (response.url().includes('/api/') && response.status() >= 400) {
+      const body = await response.json().catch(() => null)
+      console.log(`[api ${response.status()}] ${response.request().method()} ${response.request().url()}`)
+      if (body !== null) console.log('           body:', JSON.stringify(body).slice(0, 300))
+    }
+  })
+  page.on('requestfailed', (request) => {
+    if (request.resourceType() === 'document' || request.resourceType() === 'script') {
+      console.log(`[requestfailed] ${request.failure()?.errorText} at ${request.url()}`)
+    }
+  })
 
-  const bodyText = await page.evaluate(() => document.body?.innerText ?? '')
-  if (/log in|sign in|welcome back/i.test(bodyText) && !/create delivery/i.test(bodyText)) {
-    console.log('\n⏳ Not logged in yet. Log in inside the opened window; the script will continue automatically…\n')
-    await page.waitForFunction(
-      () => /create delivery/i.test(document.body?.innerText ?? ''),
-      { timeout: 300_000 },
-    )
-    await page.goto(appUrl('/business/deliveries/new'), { waitUntil: 'domcontentloaded' })
+  // 1. Land on the homepage, then let the user log in by hand. The script
+  // waits until a signed-in state is visible, then continues automatically.
+  console.log(`→ opening ${APP_URL} …`)
+  await page.goto(APP_URL, { waitUntil: 'load', timeout: 60_000 })
+  await page.bringToFront()
+  console.log(`→ landed on ${page.url()}`)
+
+  // Optional nudge: if the landing page shows a "Log in" affordance, click it
+  // so the login form is on screen; otherwise the user can use the site nav.
+  await sleep(2_000)
+  await page.evaluate(() => {
+    const node = [...document.querySelectorAll('a, button')]
+      .find((n) => /^log in|sign in$/i.test(n.textContent.trim()))
+    node?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    node?.click()
+  })
+  console.log('\n⏳ The window is on the site — enter your email and password and log in.')
+  console.log('   The script continues automatically once you are signed in…\n')
+
+  await page.waitForFunction(
+    () => {
+      const url = location.href
+      const text = document.body?.innerText ?? ''
+      const onBusinessApp = /\/business(?!\/login|\/register)/.test(url)
+      const passwordField = document.querySelector('input[type="password"]')
+      return onBusinessApp && !passwordField && text.trim().length > 40
+    },
+    { timeout: 300_000, polling: 500 },
+  )
+  console.log(`✔ Signed in as of ${page.url()}`)
+
+  const task = await askTask()
+
+  if (task === 'driver') {
+    await runCreateDriver(page)
+  } else {
+    await runCreateDelivery(page)
   }
-  await waitForText(page, 'Create delivery', 30_000)
-  console.log('✔ Authenticated session confirmed — filling the form visibly')
+} finally {
+  await browser.close()
+}
 
-  // 2. Pickup section.
+// ---------------------------------------------------------------- delivery
+
+async function runCreateDelivery(page) {
+  await page.goto(appUrl('/business/deliveries/new'), { waitUntil: 'domcontentloaded' })
+  await page.waitForFunction(
+    () => /create delivery/i.test(document.body?.innerText ?? ''),
+    { timeout: 45_000, polling: 500 },
+  )
+  console.log('✔ Create-delivery form visible — filling the form visibly')
+
+  // Pickup section.
   await typeVisible(page, '#pickupAddress', ORDER.pickupAddress)
   await selectNeighborhood(page, 'pickupNeighborhood', ORDER.pickupNeighborhood)
   await typeVisible(page, '#pickupLandmark', ORDER.pickupLandmark)
@@ -140,7 +254,7 @@ try {
   await typeVisible(page, '#pickupContactPhone', ORDER.pickupContactPhone)
   console.log('✔ Pickup section entered')
 
-  // 3. Delivery section.
+  // Delivery section.
   await typeVisible(page, '#dropoffAddress', ORDER.dropoffAddress)
   await selectNeighborhood(page, 'dropoffNeighborhood', ORDER.dropoffNeighborhood)
   await typeVisible(page, '#dropoffLandmark', ORDER.dropoffLandmark)
@@ -148,7 +262,7 @@ try {
   await typeVisible(page, '#recipientPhone', ORDER.recipientPhone)
   console.log('✔ Delivery section entered')
 
-  // 4. Package section.
+  // Package section.
   await typeVisible(page, '#packageDescription', ORDER.packageDescription)
   await typeVisible(page, '#declaredValue', ORDER.declaredValue)
   await typeVisible(page, '#notes', ORDER.notes)
@@ -162,12 +276,12 @@ try {
   }
   console.log('✔ Package section entered')
 
-  // 5. Service and payment (service default = "Normal / batched"; payment default = "Sender paid").
-  //    The delivery-fee field is left at its prefilled baseline so the schema floor passes.
+  // Service and payment (service default = "Normal / batched"; payment default = "Sender paid").
+  // The delivery-fee field is left at its prefilled baseline so the schema floor passes.
   await clickChoice(page, 'Sender paid')
   console.log('✔ Service & payment confirmed (defaults kept as-is)')
 
-  // 6. Submit and capture the success screen.
+  // Submit and capture the success screen.
   await scrollToField(page, 'button[type="submit"]')
   await clickButtonByText(page, 'Create delivery')
   await waitForText(page, 'Delivery created', 30_000)
@@ -180,6 +294,29 @@ try {
   console.log(`\n🎉 Delivery created — tracking id: ${trackingId}`)
   console.log('   The window stays open for 10s so you can see the success page…')
   await sleep(10_000)
-} finally {
-  await browser.close()
+}
+
+// ------------------------------------------------------------------ driver
+
+async function runCreateDriver(page) {
+  await page.goto(appUrl('/business/drivers'), { waitUntil: 'domcontentloaded' })
+  await page.waitForFunction(
+    () => /onboard a driver/i.test(document.body?.innerText ?? ''),
+    { timeout: 45_000, polling: 500 },
+  )
+  console.log('✔ Drivers page visible — onboarding a driver…')
+
+  await typeVisible(page, 'input[placeholder="Driver name"]', DRIVER.displayName)
+  await typeVisible(page, 'input[placeholder="Phone number"]', DRIVER.phone)
+  await typeVisible(page, 'input[placeholder="Capacity"]', DRIVER.capacity)
+  console.log('✔ Driver details entered')
+
+  await clickButtonByText(page, 'Add driver')
+  await waitForText(page, 'was added to your driver team', 30_000)
+  const createdName = (await page.evaluate(() => document.body?.innerText ?? '')).match(
+    /\S[\S ]*?was added to your driver team/,
+  )?.[0]
+  console.log(`\n🎉 Driver onboarded — "${createdName ?? DRIVER.displayName}"`)
+  console.log('   The window stays open for 10s so you can see the team…')
+  await sleep(10_000)
 }

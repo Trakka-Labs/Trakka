@@ -11,7 +11,10 @@ import {
   updateDriverCapacity,
 } from '../../../lib/api'
 
-const EMPTY_DRIVER = { displayName: '', phone: '', capacity: '10' }
+// No prefilled digits: a fixed default ("10") used to sit in the capacity
+// input, so typing 12 produced 1012 — an invisible overflow past the 3-digit
+// cap and the backend's max(100). Empty start + placeholder instead.
+const EMPTY_DRIVER = { displayName: '', phone: '', capacity: '' }
 
 export default function Drivers() {
   const [drivers, setDrivers] = useState(null)
