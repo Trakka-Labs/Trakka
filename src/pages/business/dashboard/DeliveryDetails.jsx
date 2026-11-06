@@ -26,6 +26,7 @@ function formatNaira(value) {
 function formatDate(value, includeTime = false) {
   if (!value) return '—'
   const date = value.length === 10 ? new Date(`${value}T12:00:00`) : new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
   return new Intl.DateTimeFormat('en-NG', {
     day: 'numeric', month: 'short', year: 'numeric',
     ...(includeTime ? { hour: 'numeric', minute: '2-digit' } : {}),

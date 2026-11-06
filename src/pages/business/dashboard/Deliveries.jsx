@@ -19,11 +19,15 @@ function formatNaira(value) {
 
 function formatDate(value) {
   if (!value) return '—'
+  // Postgres ISO timestamps and plain dates both parse; the old
+  // `${value}T12:00:00` stitch produced Invalid Date for timestamps.
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return String(value)
   return new Intl.DateTimeFormat('en-NG', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
-  }).format(new Date(`${value}T12:00:00`))
+  }).format(parsed)
 }
 
 function statusMeta(status) {
