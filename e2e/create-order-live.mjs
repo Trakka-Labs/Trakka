@@ -16,7 +16,10 @@ import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import puppeteer from 'puppeteer-core'
-import { appUrl, browserExecutable, expect, waitForText } from './browser.mjs'
+import { browserExecutable, expect, waitForText } from './browser.mjs'
+
+const APP_URL = (process.env.E2E_APP_URL || 'https://www.trakka.online').replace(/\/$/, '')
+const appUrl = (path = '/') => `${APP_URL}${path}`
 
 const VIEW_DELAY_MS = Number(process.env.E2E_TYPE_DELAY || 25)
 const STEP_PAUSE_MS = Number(process.env.E2E_STEP_PAUSE || 500)
