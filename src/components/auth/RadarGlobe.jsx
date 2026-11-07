@@ -203,51 +203,39 @@ export default function RadarGlobe({ className = '' }) {
     const host = hostRef.current
     if (!host) return undefined
     let cancelled = false
-    let sketch = null
+    let cleanup = null
 
-    Promise.all([import('p5'), import('./flatMapData.json')])
-      .then(([p5Module, dataModule]) => {
+    import('./flatMapData.json')
+      .then((dataModule) => {
         if (cancelled) return
-        const P5 = p5Module.default
         const data = dataModule.default || dataModule
-        sketch = new P5((p) => {
-          let globe = null
-          let observer = null
-          let startedAt = 0
-          let lastFrame = 0
-          let ema = 16
-          let slowFrames = 0
-          const densitySteps = [Math.min(window.devicePixelRatio || 1, 2), 1.5, 1, 0.75]
-          let densityIndex = 0
+        const canvas = document.createElement('canvas')
+        canvas.className = 'block h-full w-full'
+        host.appendChild(canvas)
 
-          p.setup = () => {
-            const width = Math.max(1, host.clientWidth)
-            const height = Math.max(1, host.clientHeight)
-            const canvas = p.createCanvas(width, height)
-            canvas.parent(host)
-            p.pixelDensity(densitySteps[0])
-            p.frameRate(60)
-            globe = bootstrapMap(canvas.elt, data, densitySteps[0])
-            startedAt = p.millis()
-            if (reducedMotion) {
-              globe.drawStatic()
-              p.noLoop()
-              return
-            }
-            observer = new ResizeObserver(() => {
-              const nextWidth = Math.max(1, host.clientWidth)
-              const nextHeight = Math.max(1, host.clientHeight)
-              p.resizeCanvas(nextWidth, nextHeight)
-              p.pixelDensity(densitySteps[densityIndex])
-              globe.resize(nextWidth, nextHeight, densitySteps[densityIndex])
-            })
-            observer.observe(host)
-            globe.resize(width, height, densitySteps[0])
-          }
+        const densitySteps = [Math.min(window.devicePixelRatio || 1, 2), 1.5, 1, 0.75]
+        let densityIndex = 0
+        let globe = null
+        let observer = null
+        let raf = null
+        let lastFrame = 0
+        let ema = 16
+        let slowFrames = 0
+        const startedAt = performance.now()
 
-          p.draw = () => {
-            if (!globe) return
-            const now = p.millis()
+        const resize = () => {
+          const width = Math.max(1, host.clientWidth)
+          const height = Math.max(1, host.clientHeight)
+          globe?.resize(width, height, densitySteps[densityIndex])
+        }
+
+        globe = bootstrapMap(canvas, data, densitySteps[0])
+        resize()
+
+        if (reducedMotion) {
+          globe.drawStatic()
+        } else {
+          const tick = (now) => {
             // Adaptive quality: if frames stay slow, drop the render density a
             // step so the motion stays fluid instead of stuttering.
             if (lastFrame) {
@@ -257,19 +245,23 @@ export default function RadarGlobe({ className = '' }) {
                 densityIndex += 1
                 slowFrames = 0
                 ema = 16
-                p.pixelDensity(densitySteps[densityIndex])
-                globe.resize(Math.max(1, host.clientWidth), Math.max(1, host.clientHeight), densitySteps[densityIndex])
+                resize()
               }
             }
             lastFrame = now
             globe.drawFrame(now - startedAt)
+            raf = requestAnimationFrame(tick)
           }
+          raf = requestAnimationFrame(tick)
+          observer = new ResizeObserver(resize)
+          observer.observe(host)
+        }
 
-          p.remove = ((originalRemove) => (...args) => {
-            observer?.disconnect()
-            return originalRemove.apply(p, args)
-          })(p.remove)
-        }, host)
+        cleanup = () => {
+          if (raf) cancelAnimationFrame(raf)
+          observer?.disconnect()
+          canvas.remove()
+        }
       })
       .catch((err) => {
         console.error('map animation failed to boot', err)
@@ -278,7 +270,7 @@ export default function RadarGlobe({ className = '' }) {
 
     return () => {
       cancelled = true
-      if (sketch) sketch.remove()
+      cleanup?.()
     }
   }, [reducedMotion])
 
@@ -346,6 +338,8 @@ function bootstrapMap(canvas, data, pixelDensity = 1) {
     DPR = dpr
     W = width
     H = height
+    canvas.width = Math.round(W * DPR)
+    canvas.height = Math.round(H * DPR)
     const px = W * 0.05
     STAGE = {
       A: fitBounds(AFRICA_B, [px, safeTop + 4, W - px, H - safeBot - 4]),
