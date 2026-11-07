@@ -1,51 +1,36 @@
+/**
+ * Trakka logo mark: a green location pin whose letter-T crossbar ends in an
+ * amber dot. Ported from the brand "Trakka Logo Mark" artwork (viewBox
+ * 0 0 120 140). `size` is the rendered height; width follows the aspect ratio.
+ */
 export default function Logo({ className = '', size = 32 }) {
+  const width = (size * 120) / 140
+
   return (
     <svg
-      width={size}
+      width={width}
       height={size}
-      viewBox="0 0 40 40"
+      viewBox="0 0 120 140"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       role="img"
       aria-label="Trakka logo"
     >
-      <defs>
-        <linearGradient id="trakka-grad" x1="4" y1="4" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#008EBF" />
-          <stop offset="100%" stopColor="#0B1C30" />
-        </linearGradient>
-      </defs>
-
-      {/* Route path forming a stylized T / pin shape */}
+      {/* Pin */}
       <path
-        d="M6 12C6 8.68629 8.68629 6 12 6H28C31.3137 6 34 8.68629 34 12V22C34 25.3137 31.3137 28 28 28H21L15 35V28H12C8.68629 28 6 25.3137 6 22V12Z"
-        fill="url(#trakka-grad)"
-        fillOpacity="0.12"
-        stroke="url(#trakka-grad)"
-        strokeWidth="1.5"
+        d="M60 0C27 0 0 27 0 60C0 95 40 125 60 140C80 125 120 95 120 60C120 27 93 0 60 0Z"
+        fill="#12A05A"
       />
-
-      {/* Dotted route line */}
+      {/* Letter T */}
       <path
-        d="M11 17.5H29"
-        stroke="url(#trakka-grad)"
-        strokeWidth="1.75"
+        d="M36 44H84M60 44V92"
+        stroke="#0E1A14"
+        strokeWidth="15"
         strokeLinecap="round"
-        strokeDasharray="1 4.5"
       />
-
-      {/* Static pin */}
-      <circle cx="11" cy="17.5" r="2.25" fill="var(--color-paper)" />
-
-      {/* Moving dot with pulse animation */}
-      <circle cx="29" cy="17.5" r="2.75" fill="#FD761A">
-        <animate attributeName="cx" values="11;29;11" dur="4.5s" repeatCount="indefinite" />
-      </circle>
-      <circle cx="29" cy="17.5" r="5" fill="#FD761A" fillOpacity="0.25">
-        <animate attributeName="cx" values="11;29;11" dur="4.5s" repeatCount="indefinite" />
-        <animate attributeName="r" values="3;6;3" dur="1.6s" repeatCount="indefinite" />
-      </circle>
+      {/* Amber dot at the crossbar tip */}
+      <circle cx="84" cy="44" r="11" fill="#F5A623" />
     </svg>
   )
 }

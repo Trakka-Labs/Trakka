@@ -1,54 +1,84 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useOutletContext } from 'react-router'
-import { ArrowUpRight, CheckCircle2, Clock3, Package, Truck } from 'lucide-react'
+import { useOutletContext } from 'react-router'
+import { CheckCircle2, Clock3, Package, Truck } from 'lucide-react'
 import OperationsFlow from '../../../components/dashboard/OperationsFlow'
-import TodaysTrips from '../../../components/dashboard/TodaysTrips'
 import RecentActivity from '../../../components/dashboard/RecentActivity'
 import Loader from '../../../components/ui/Loader'
 import Alert from '../../../components/ui/Alert'
 import { getDashboard } from '../../../lib/api'
-import { ROUTES } from '../../../lib/routes'
+import { relativeTime } from '../../../lib/formatDate'
 
 const METRIC_CONFIG = [
-  { key: 'total', label: 'Total deliveries', icon: Package, tone: 'text-[var(--color-route-cyan)]' },
-  { key: 'active', label: 'In transit', icon: Truck, tone: 'text-[var(--color-dispatch-orange)]' },
-  { key: 'completed', label: 'Completed', icon: CheckCircle2, tone: 'text-[var(--color-emerald)]' },
-  { key: 'pending', label: 'Pending pickup', icon: Clock3, tone: 'text-[var(--color-paper-faint)]' },
+  {
+    key: 'total', label: 'Total deliveries', icon: Package,
+    chip: 'bg-[var(--color-route-cyan)]/10 border-[var(--color-route-cyan)]/25 text-[var(--color-route-cyan)]',
+    caption: 'Active records in current cycle',
+  },
+  {
+    key: 'active', label: 'In transit', icon: Truck,
+    chip: 'bg-[var(--color-dispatch-orange)]/10 border-[var(--color-dispatch-orange)]/25 text-[var(--color-dispatch-orange)]',
+    live: true, caption: 'Live on the road right now',
+  },
+  {
+    key: 'completed', label: 'Completed', icon: CheckCircle2,
+    chip: 'bg-[var(--color-emerald)]/10 border-[var(--color-emerald)]/25 text-[var(--color-mint)]',
+    caption: 'Drop-offs completed so far',
+  },
+  {
+    key: 'pending', label: 'Pending pickup', icon: Clock3,
+    chip: 'bg-[var(--color-dispatch-orange)]/10 border-[var(--color-dispatch-orange)]/25 text-[var(--color-dispatch-orange-bright)]',
+    caption: 'Awaiting dispatch queues',
+  },
 ]
 
-function MetricsRail({ metrics }) {
+function StatCards({ metrics }) {
   return (
-    <aside className="dashboard-panel overflow-hidden rounded-lg self-start">
-      {METRIC_CONFIG.map(({ key, label, icon: Icon, tone }, index) => (
+    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {METRIC_CONFIG.map(({ key, label, icon: Icon, chip, live, caption }) => (
         <div
           key={key}
-          className={`flex items-center gap-3 px-4 py-4 ${index ? 'border-t border-[var(--color-border-subtle)]' : ''}`}
+          className="dashboard-panel rounded-xl border-[var(--color-border-subtle)] p-5 transition-all duration-200 hover:border-[var(--color-paper-faint)]"
         >
-          <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[var(--soft-fill)] ${tone}`}>
-            <Icon size={16} />
-          </span>
-          <div>
-            <p className="text-[10px] text-[var(--color-paper-faint)]">{label}</p>
-            <p className="mt-0.5 text-lg font-semibold tabular-nums text-[var(--color-paper)]">{metrics[key]}</p>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-[var(--color-paper-faint)]">{label}</span>
+            <span className={`grid h-8 w-8 place-items-center rounded-lg border ${chip}`}>
+              <Icon size={16} />
+            </span>
           </div>
+          <div className="mt-4 flex items-baseline gap-3">
+            <span className="text-3xl font-extrabold tracking-tight tabular-nums text-[var(--color-paper)]">
+              {metrics[key]}
+            </span>
+            {live && metrics[key] > 0 && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-dispatch-orange)]/25 bg-[var(--color-dispatch-orange)]/10 px-2 py-0.5 text-[11px] font-semibold text-[var(--color-dispatch-orange)]">
+                <span className="h-1.5 w-1.5 animate-ping rounded-full bg-[var(--color-dispatch-orange)]" />
+                Active tracking
+              </span>
+            )}
+            {key === 'pending' && metrics[key] === 0 && (
+              <span className="text-[11px] font-medium text-[var(--color-paper-faint)]">All cleared</span>
+            )}
+          </div>
+          <p className="mt-2 text-[11px] text-[var(--color-paper-faint)]">{caption}</p>
         </div>
       ))}
-    </aside>
+    </section>
   )
 }
 
-function relativeTime(value) {
-  const seconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000))
-  if (seconds < 60) return 'Just now'
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`
-  return new Date(value).toLocaleDateString()
-}
 
 export default function DashboardOverview() {
   const { session } = useOutletContext()
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
+
+  const load = () =>
+    getDashboard()
+      .then((result) => {
+        setData(result)
+        setError('')
+      })
+      .catch((err) => setError(err.message))
 
   useEffect(() => {
     let cancelled = false
@@ -68,7 +98,6 @@ export default function DashboardOverview() {
     () => data?.activity.map((item) => ({ ...item, time: relativeTime(item.createdAt) })) || [],
     [data],
   )
-
   if (!data && !error) {
     return <div className="flex min-h-80 items-center justify-center"><Loader size={28} /></div>
   }
@@ -78,40 +107,59 @@ export default function DashboardOverview() {
 
   return (
     <div>
-      <header className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+      <header className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <p className="text-xs font-medium text-[var(--color-route-cyan)]">Operations overview</p>
-          <h1 className="mt-1 text-3xl font-medium tracking-[-0.045em] text-[var(--color-paper)] sm:text-4xl">
+          <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-dispatch-orange)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-dispatch-orange)]" />
+            Operations overview
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--color-paper)] sm:text-3xl">
             General statistics
           </h1>
-          <p className="mt-2 text-sm text-[var(--color-paper-dim)]">
-            {session.companyName} has {metrics.active} active {metrics.active === 1 ? 'delivery' : 'deliveries'}.
+          <p className="mt-1 text-sm text-[var(--color-paper-dim)]">
+            {session.companyName} currently has{' '}
+            <span className="font-medium text-[var(--color-paper)]">
+              {metrics.active} active {metrics.active === 1 ? 'delivery' : 'deliveries'}
+            </span>{' '}
+            moving across local dispatch zones.
           </p>
         </div>
-        <Link
-          to={ROUTES.businessCreateDelivery}
-          className="inline-flex items-center gap-2 self-start rounded-xl bg-[var(--color-paper)] px-4 py-2.5 text-xs font-medium text-[var(--color-ink)]"
-        >
-          Create delivery <ArrowUpRight size={14} />
-        </Link>
+        <div className="flex items-center gap-2 self-start md:self-auto">
+          <span className="mr-1 text-xs font-medium text-[var(--color-paper-faint)]">Timeframe:</span>
+          <button
+            type="button"
+            className="rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-paper)] shadow-xs"
+          >
+            Today
+          </button>
+          <button
+            type="button"
+            className="rounded-lg border border-transparent px-3 py-1.5 text-xs font-medium text-[var(--color-paper-dim)] transition-colors hover:text-[var(--color-paper)]"
+          >
+            All time
+          </button>
+        </div>
       </header>
 
       {error && <Alert tone="error" className="mb-5">{error}</Alert>}
 
-      <div className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
-        <MetricsRail metrics={metrics} />
-        <OperationsFlow metrics={metrics} trips={trips} />
-      </div>
+      <StatCards metrics={metrics} />
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.75fr)]">
-        <section>
-          <h2 className="mb-3 text-sm font-semibold text-[var(--color-paper)]">Recent deliveries</h2>
-          <TodaysTrips trips={trips} />
-        </section>
-        <section>
-          <h2 className="mb-3 text-sm font-semibold text-[var(--color-paper)]">Recent activity</h2>
-          <RecentActivity activity={activity} />
-        </section>
+      <div className="mt-8 grid grid-cols-1 gap-8 xl:grid-cols-3">
+        <div className="space-y-8 xl:col-span-2">
+          <OperationsFlow
+            metrics={metrics}
+            trips={trips.slice(0, 2)}
+            total={trips.length}
+            onAssigned={load}
+          />
+        </div>
+        <div className="xl:col-span-1">
+          <section className="mb-3">
+            <h2 className="text-sm font-semibold text-[var(--color-paper)]">Recent activity</h2>
+          </section>
+          <RecentActivity activity={activity.slice(0, 2)} total={activity.length} />
+        </div>
       </div>
     </div>
   )

@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 import { motion } from 'framer-motion'
 import Logo from '../ui/Logo'
-import RouteTicker from '../ui/RouteTicker'
+import RadarGlobe from './RadarGlobe'
 import ThemeToggle from '../ui/ThemeToggle'
 import { ROUTES } from '../../lib/routes'
 
@@ -14,32 +14,32 @@ const HIGHLIGHTS = [
 export default function AuthLayout({ children, eyebrow = 'BUSINESS PORTAL' }) {
   return (
     <div className="flex min-h-screen bg-[var(--color-ink)]">
-      {/* Branding panel */}
-      <aside className="relative hidden overflow-hidden border-r border-[var(--color-border-subtle)] lg:flex lg:w-[44%] lg:flex-col lg:justify-between lg:p-12 xl:w-[40%] xl:p-16">
+      {/* Branding panel with the radar globe backdrop */}
+      <aside className="relative hidden overflow-hidden bg-[#04070d] border-r border-[var(--color-border-subtle)] lg:flex lg:w-[44%] lg:flex-col lg:justify-between lg:p-12 xl:w-[40%] xl:p-16">
+        <RadarGlobe />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_45%,rgba(2,4,8,0)_40%,rgba(2,4,8,0.8)_100%)]" />
+
         <Link to={ROUTES.home} className="relative z-10 flex items-center gap-2.5">
           <Logo size={32} />
-          <span className="font-display text-xl font-semibold text-[var(--color-paper)]">Trakka</span>
+          <span className="font-display text-xl font-semibold text-white">Trakka</span>
         </Link>
 
         <div className="relative z-10">
-          <span className="font-mono text-xs tracking-widest text-[var(--color-mint)]">{eyebrow}</span>
-          <h1 className="mt-4 font-display text-3xl font-semibold leading-[1.15] text-[var(--color-paper)] xl:text-4xl">
+          <span className="font-mono text-xs tracking-widest text-[#7ee2b8]">{eyebrow}</span>
+          <h1 className="mt-4 font-display text-3xl font-semibold leading-[1.15] text-white xl:text-4xl">
             Run your logistics operation like it&apos;s already scaled.
           </h1>
           <ul className="mt-8 space-y-4">
             {HIGHLIGHTS.map((item) => (
-              <li key={item} className="flex items-start gap-3 text-sm text-[var(--color-paper-dim)]">
+              <li key={item} className="flex items-start gap-3 text-sm text-white/70">
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-dispatch-orange)]" />
                 {item}
               </li>
             ))}
           </ul>
-          <div className="mt-10">
-            <RouteTicker />
-          </div>
         </div>
 
-        <p className="relative z-10 text-xs text-[var(--color-paper-faint)]">
+        <p className="relative z-10 text-xs text-white/45">
           © {new Date().getFullYear()} Trakka. Built for African logistics.
         </p>
       </aside>

@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Bell, ChevronDown, LogOut, Menu, Search } from 'lucide-react'
 import { Link } from 'react-router'
-import Logo from '../ui/Logo'
 import ThemeToggle from '../ui/ThemeToggle'
+import GlobalSearch from './GlobalSearch'
 import { logoutBusiness } from '../../lib/api'
 import { ROUTES } from '../../lib/routes'
 
@@ -21,14 +21,34 @@ function initials(name = '') {
 export default function Topbar({ companyName, onMenuClick }) {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
 
   const handleSignOut = async () => {
     await logoutBusiness().catch(() => undefined)
     navigate(ROUTES.businessLogin)
   }
 
+  // Global hotkeys: "/" or ⌘K/Ctrl+K opens search (when not already typing).
+  useEffect(() => {
+    const onKey = (event) => {
+      const typingField = ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target?.tagName)
+        || event.target?.isContentEditable
+      if (event.key === '/' && !typingField) {
+        event.preventDefault()
+        setSearchOpen(true)
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setSearchOpen(true)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]/90 backdrop-blur-xl">
+      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
       <div className="mx-auto flex h-[4.5rem] max-w-[1600px] items-center gap-4 px-4 sm:px-6 lg:px-10">
         <button
           type="button"
@@ -38,19 +58,27 @@ export default function Topbar({ companyName, onMenuClick }) {
         >
           <Menu size={19} />
         </button>
-        <Link to={ROUTES.home} className="mr-2 flex shrink-0 items-center gap-2.5">
-          <Logo size={28} />
-          <span className="font-display text-lg font-semibold tracking-[-0.03em] text-[var(--color-paper)]">Trakka</span>
-        </Link>
 
-        <label className="relative hidden min-w-0 max-w-md flex-1 lg:block">
-          <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-paper-faint)]" />
-          <input
-            type="search"
-            placeholder="Search trips, drivers, tracking IDs"
-            className="h-9 w-full rounded-lg border border-transparent bg-[var(--color-ink-deep)] pl-10 pr-4 text-xs text-[var(--color-paper)] outline-none placeholder:text-[var(--color-paper-faint)] focus:border-[var(--color-route-cyan)]"
-          />
-        </label>
+        <button
+          type="button"
+          onClick={() => setSearchOpen(true)}
+          className="hidden h-9 min-w-0 max-w-md flex-1 items-center gap-2.5 rounded-lg border border-transparent bg-[var(--color-ink-deep)] pl-3.5 pr-3 text-left text-xs text-[var(--color-paper-faint)] transition-colors hover:border-[var(--color-route-cyan)] lg:flex"
+          aria-label="Search trips, drivers, tracking IDs"
+        >
+          <Search size={15} />
+          <span className="flex-1 truncate">Search trips, drivers, tracking IDs</span>
+          <kbd className="rounded border border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-1.5 py-0.5 font-mono text-[10px] font-medium text-[var(--color-paper-faint)]">
+            /
+          </kbd>
+        </button>
+        <button
+          type="button"
+          onClick={() => setSearchOpen(true)}
+          className="ml-auto flex h-9 w-9 items-center justify-center rounded-xl text-[var(--color-paper-dim)] hover:bg-[var(--soft-hover)] hover:text-[var(--color-paper)] lg:hidden"
+          aria-label="Search"
+        >
+          <Search size={17} />
+        </button>
 
         <nav className="ml-auto hidden h-full items-center gap-7 lg:flex" aria-label="Dashboard previews">
           {[

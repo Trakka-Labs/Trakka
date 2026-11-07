@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import AuthLayout from '../../components/auth/AuthLayout'
 import AuthTabs from '../../components/auth/AuthTabs'
-import GoogleIdentityButton from '../../components/auth/GoogleIdentityButton'
 import Alert from '../../components/ui/Alert'
 import SignupForm from './components/SignupForm'
 import LoginForm from './components/LoginForm'
@@ -77,14 +76,6 @@ export default function BusinessAuth() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        <div className="my-6 flex items-center gap-3" aria-hidden="true">
-          <span className="h-px flex-1 bg-[var(--color-border-subtle)]" />
-          <span className="font-mono text-xs text-[var(--color-paper-faint)]">OR</span>
-          <span className="h-px flex-1 bg-[var(--color-border-subtle)]" />
-        </div>
-
-        <GoogleIdentityButton intent={mode} onSuccess={finalizeAuth} onError={setServerError} />
 
         <p className="mt-8 text-center text-xs leading-relaxed text-[var(--color-paper-faint)]">
           By continuing, you agree to Trakka&apos;s{' '}

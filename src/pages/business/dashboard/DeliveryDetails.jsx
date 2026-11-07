@@ -23,15 +23,6 @@ function formatNaira(value) {
   }).format(Number(value) || 0)
 }
 
-function formatDate(value, includeTime = false) {
-  if (!value) return '—'
-  const date = value.length === 10 ? new Date(`${value}T12:00:00`) : new Date(value)
-  if (Number.isNaN(date.getTime())) return String(value)
-  return new Intl.DateTimeFormat('en-NG', {
-    day: 'numeric', month: 'short', year: 'numeric',
-    ...(includeTime ? { hour: 'numeric', minute: '2-digit' } : {}),
-  }).format(date)
-}
 
 function InfoRow({ label, value, children }) {
   return (
@@ -114,7 +105,7 @@ export default function DeliveryDetails() {
             {delivery.trackingId}
           </h1>
           <p className="mt-2 text-sm text-[var(--color-paper-dim)]">
-            Created {formatDate(delivery.createdAt, true)}
+            Created {humanDateTime(delivery.createdAt)}
           </p>
         </div>
         <Badge tone={status.tone}>{status.label}</Badge>
@@ -159,10 +150,10 @@ export default function DeliveryDetails() {
 
         <DetailSection icon={ReceiptText} title="Service and payment">
           <InfoRow label="Service" value={delivery.serviceType === 'urgent' ? 'Urgent / direct' : 'Normal / batched'} />
-          <InfoRow label="Requested date" value={formatDate(delivery.requestedDate)} />
+          <InfoRow label="Requested date" value={humanDate(delivery.requestedDate)} />
           <InfoRow label="Payment responsibility" value={PAYMENT_LABELS[delivery.paymentType] || delivery.paymentType} />
           <InfoRow label="Delivery fee" value={formatNaira(delivery.deliveryFee)} />
-          <InfoRow label="Last updated" value={formatDate(delivery.updatedAt, true)} />
+          <InfoRow label="Last updated" value={humanDateTime(delivery.updatedAt)} />
         </DetailSection>
       </div>
     </div>

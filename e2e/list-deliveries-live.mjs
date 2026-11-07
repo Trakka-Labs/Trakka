@@ -1,20 +1,19 @@
 /**
  * Read-only inspection: open /business/deliveries in the automation profile
- * and print the deliveries that THIS account sees in production.
+ * and print the deliveries that THIS account sees on the chosen stack
+ * (local dev or the deployed site — it prompts, same as create-order-live).
  * Creates nothing. Run: node e2e/list-deliveries-live.mjs
  */
-import { join, resolve } from 'node:path'
-import { homedir } from 'node:os'
 import puppeteer from 'puppeteer-core'
 import { browserExecutable } from './browser.mjs'
+import { askEnvironment, profileDirFor } from './target.mjs'
 
-const APP_URL = (process.env.E2E_APP_URL || 'https://www.trakka.online').replace(/\/$/, '')
+const TARGET = await askEnvironment()
+const APP_URL = TARGET.url
 const appUrl = (path = '/') => `${APP_URL}${path}`
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms))
 
-const PROFILE_DIR = process.env.E2E_PROFILE_DIR
-  ? resolve(process.env.E2E_PROFILE_DIR)
-  : join(homedir(), '.trakka-automation-profile')
+const PROFILE_DIR = profileDirFor(TARGET.env)
 
 const browser = await puppeteer.launch({
   executablePath: browserExecutable(),
@@ -36,6 +35,8 @@ try {
   const page = await browser.newPage()
   await page.bringToFront()
 
+  console.log(`→ target: ${TARGET.env === 'local' ? 'LOCAL dev' : 'REMOTE / deployed'} — ${APP_URL}`)
+  console.log(`→ browser profile: ${PROFILE_DIR}`)
   await page.goto(appUrl('/business/deliveries'), { waitUntil: 'load', timeout: 60_000 })
   await page.bringToFront()
   await sleep(3_000)

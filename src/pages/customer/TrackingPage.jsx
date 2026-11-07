@@ -1,27 +1,28 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router'
 import { PackageCheck, ShieldCheck, Truck } from 'lucide-react'
 import Alert from '../../components/ui/Alert'
 import Loader from '../../components/ui/Loader'
 import Logo from '../../components/ui/Logo'
 import LiveMap from '../../components/ui/LiveMap'
+import usePolling from '../../hooks/usePolling'
 import { getTracking } from '../../lib/api'
+import { ORDER_STATUSES, orderStatusIndex } from '../../lib/statuses'
 
-const TIMELINE = [
-  { key: 'ready_for_dispatch', label: 'Order confirmed' },
-  { key: 'accepted', label: 'Rider assigned' },
-  { key: 'picked_up', label: 'Package picked up' },
-  { key: 'in_transit', label: 'En route' },
-  { key: 'arriving', label: 'Arriving soon' },
-  { key: 'delivered', label: 'Delivered' },
-]
+// One ordered timeline, derived from the shared order-status vocabulary so the
+// page can never diverge from it again (the second inline copy is gone).
+const TRACKING_STEPS = [
+  ['ready_for_dispatch', 'Order confirmed'],
+  ['assigned', 'Rider assigned'],
+  ['accepted', 'Rider accepted'],
+  ['pickup_in_progress', 'Heading to pickup'],
+  ['picked_up', 'Package picked up'],
+  ['in_transit', 'En route'],
+  ['arriving', 'Arriving soon'],
+  ['delivered', 'Delivered'],
+].filter(([key]) => ORDER_STATUSES.includes(key))
+const TIMELINE = TRACKING_STEPS.map(([key, label]) => ({ key, label }))
 
-function timeOf(value) {
-  return new Intl.DateTimeFormat('en-NG', {
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(value))
-}
 
 /**
  * Customer tracking page. Polls adaptively: every 4s while actively in
@@ -37,36 +38,37 @@ export default function TrackingPage() {
   const stateRef = useRef(null)
   stateRef.current = data
 
-  useEffect(() => {
-    let cancelled = false
-    let timer
-
-    const tick = async () => {
-      try {
-        const payload = await getTracking(token)
-        if (cancelled) return
-        setTracking(payload)
-        setError('')
-      } catch (err) {
-        if (cancelled) return
-        setError(err.message)
-        return
-      }
-      if (cancelled) return
-      timer = window.setTimeout(tick, nextDelayMs(stateRef.current))
-    }
-    tick()
-    return () => {
-      cancelled = true
-      window.clearTimeout(timer)
-    }
-  }, [token])
+  // Adaptive polling: 4s while actively en route, 15s otherwise, paused while
+  // hidden, and stopped entirely once delivered/expired. Failures keep polling
+  // — the error only clears once a successful fetch replaces it.
+  const pollEnabled = !data || (data.state !== 'delivered' && data.state !== 'expired')
+  usePolling(
+    async () => {
+      const payload = await getTracking(token)
+      setTracking(payload)
+      setError('')
+    },
+    {
+      enabled: pollEnabled,
+      onError: (err) => {
+        if (err) setError(err.message)
+      },
+      getInterval: () => {
+        const status = stateRef.current?.status
+        if (status === 'in_transit' || status === 'arriving') return 4_000
+        return 15_000
+      },
+    },
+  )
 
   const activeIndex = useMemo(() => {
     if (!data) return -1
-    const order = ['ready_for_dispatch', 'accepted', 'picked_up', 'in_transit', 'arriving', 'delivered']
-    return order.indexOf(data.status)
+    // status values not on the timeline (cancelled/failed/assigned) resolve to
+    // -1 here; clampToTimeline below keeps the stepper rendering sensibly.
+    return orderStatusIndex(data.status)
   }, [data])
+  // Active row index within the rendered timeline (unknown status → no row).
+  const timelineIndex = activeIndex < 0 ? -1 : TIMELINE.findIndex((step) => step.key === data?.status)
 
   const etaLabel = data?.eta
     ? data.eta.minutes >= 90
@@ -143,7 +145,7 @@ export default function TrackingPage() {
                       : 'Link expired on'}
                   </p>
                   <p className="text-lg font-semibold text-[var(--color-paper)]">
-                    {data.completedAt ? timeOf(data.completedAt) : '—'}
+                    {data.completedAt ? humanTime(data.completedAt) : '—'}
                   </p>
                 </div>
               </div>
@@ -174,13 +176,16 @@ export default function TrackingPage() {
             </div>
             <div className="text-right">
               <p className="text-[10px] uppercase tracking-wider text-[var(--color-paper-faint)]">Requested</p>
-              <p className="text-sm text-[var(--color-paper-dim)]">{data.requestedDate}</p>
+              <p className="text-sm text-[var(--color-paper-dim)]">{humanDate(data.requestedDate)}</p>
             </div>
           </div>
 
           <ol className="mt-5 space-y-0">
             {TIMELINE.map((step, index) => {
-              const reached = activeIndex >= index
+              const reached = timelineIndex >= index
+                // A status outside the ordered set (e.g. cancelled/failed)
+                // keeps the rows unhighlighted rather than jumping.
+                || (timelineIndex === -1 && step.key === 'ready_for_dispatch')
               return (
                 <li key={step.key} className="flex gap-3">
                   <div className="flex flex-col items-center">
@@ -203,9 +208,9 @@ export default function TrackingPage() {
                     <p className={`text-sm ${reached ? 'text-[var(--color-paper)]' : 'text-[var(--color-paper-faint)]'}`}>
                       {step.label}
                     </p>
-                    {reached && data.timeline.length > 0 && index === activeIndex && (
+                    {reached && data.timeline.length > 0 && index === timelineIndex && (
                       <p className="text-[10px] text-[var(--color-paper-faint)]">
-                        {timeOf(data.timeline[data.timeline.length - 1].at)}
+                        {humanTime(data.timeline[data.timeline.length - 1].at)}
                       </p>
                     )}
                   </div>
@@ -221,10 +226,4 @@ export default function TrackingPage() {
       </main>
     </div>
   )
-}
-
-function nextDelayMs(tracking) {
-  const status = tracking?.tracking?.status
-  if (status === 'in_transit' || status === 'arriving') return 4_000
-  return 15_000
 }

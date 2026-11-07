@@ -5,19 +5,19 @@ import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import EmptyState from '../../../components/dashboard/EmptyState'
 import Loader from '../../../components/ui/Loader'
+import usePolling from '../../../hooks/usePolling'
 import {
   createOrderLink, createRiderRouteAccess, disableOrderLink, getOrderLinks,
   getBusinessRouteMessages, getCommunicationRoutes, getTrackingAlerts,
   rotateOrderLink, sendBusinessRouteMessage, shareRouteLinks,
 } from '../../../lib/api'
-import { riderRouteMessagesRoute } from '../../../lib/routes'
+import Pagination from '../../../components/ui/Pagination'
+import { ROUTES } from '../../../lib/routes'
+import { humanDateTime } from '../../../lib/formatDate'
 
-function time(value) {
-  if (!value) return ''
-  return new Intl.DateTimeFormat('en-NG', {
-    day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
-  }).format(new Date(value))
-}
+
+const ROUTES_PAGE_SIZE = 8
+const MESSAGES_PAGE_SIZE = 30
 
 function statusTone(status) {
   if (status === 'active' || status === 'accepted') return 'emerald'
@@ -36,6 +36,8 @@ export default function Communications() {
   const [orderLink, setOrderLink] = useState(null)
   const [alerts, setAlerts] = useState([])
   const [sharedLinks, setSharedLinks] = useState([])
+  const [routesPage, setRoutesPage] = useState(1)
+  const [messageWindow, setMessageWindow] = useState(MESSAGES_PAGE_SIZE)
   const endRef = useRef(null)
 
   const loadAlerts = useCallback(async () => {
@@ -138,16 +140,16 @@ export default function Communications() {
   useEffect(() => {
     setConversation(null)
     setAccessLink('')
+    setMessageWindow(MESSAGES_PAGE_SIZE)
     loadConversation()
   }, [loadConversation])
 
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      loadRoutes().catch(() => {})
-      loadConversation(true)
-    }, 4_000)
-    return () => window.clearInterval(interval)
-  }, [loadConversation, loadRoutes])
+  // 4-second refresh: routes list quietly, conversation quietly (errors only
+  // surfaced on manual loads). usePolling also pauses while the tab is hidden.
+  usePolling(
+    () => Promise.all([loadRoutes().catch(() => {}), loadConversation(true)]),
+    { interval: 4_000 },
+  )
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -173,8 +175,8 @@ export default function Communications() {
     setBusy('access')
     try {
       const access = await createRiderRouteAccess(selectedId)
-      const url = new URL(riderRouteMessagesRoute(selectedId), window.location.origin)
-      url.hash = new URLSearchParams({ access: access.token }).toString()
+      const url = new URL(ROUTES.riderDashboard, window.location.origin)
+      url.hash = new URLSearchParams({ access: access.token, route: selectedId }).toString()
       setAccessLink(url.toString())
     } catch (err) {
       setError(err.message)
@@ -183,10 +185,19 @@ export default function Communications() {
     }
   }
 
+  const copyAccessTimer = useRef(undefined)
+
+  // Single 1.5s "Copied" flash token shared by every copy button on the page,
+  // replacing the previously duplicated setTimeout flash keys.
+  const flashCopied = () => {
+    setBusy('copied')
+    window.clearTimeout(copyAccessTimer.current)
+    copyAccessTimer.current = window.setTimeout(() => setBusy(''), 1500)
+  }
+
   const copyAccess = async () => {
     await navigator.clipboard.writeText(accessLink)
-    setBusy('copied')
-    window.setTimeout(() => setBusy(''), 1500)
+    flashCopied()
   }
 
   const intakeUrl = (token) => `${window.location.origin}/order/${token}`
@@ -194,8 +205,7 @@ export default function Communications() {
   const copyLink = async (url) => {
     try {
       await navigator.clipboard.writeText(url)
-      setBusy('link-copied')
-      window.setTimeout(() => setBusy(''), 1500)
+      flashCopied()
     } catch {
       setError('Could not copy the link automatically — copy it from the field instead.')
     }
@@ -209,6 +219,15 @@ export default function Communications() {
   if (!routes && !error) {
     return <div className="flex min-h-80 items-center justify-center"><Loader size={28} /></div>
   }
+
+  const routesTotalPages = Math.max(1, Math.ceil((routes?.length || 0) / ROUTES_PAGE_SIZE))
+  const safeRoutesPage = Math.min(routesPage, routesTotalPages)
+  const pageRoutes = (routes || []).slice(
+    (safeRoutesPage - 1) * ROUTES_PAGE_SIZE,
+    safeRoutesPage * ROUTES_PAGE_SIZE,
+  )
+  const messages = conversation?.messages || []
+  const visibleMessages = messages.slice(-messageWindow)
 
   return (
     <div>
@@ -245,7 +264,7 @@ export default function Communications() {
                   <RefreshCw size={13} /> {busy === 'order-link' ? 'Working…' : 'Rotate link'}
                 </Button>
                 <Button type="button" size="sm" variant="ghost" onClick={() => copyLink(intakeUrl(orderLink.token))}>
-                  <Copy size={13} /> {busy === 'link-copied' ? 'Copied' : 'Copy link'}
+                  <Copy size={13} /> {busy === 'copied' ? 'Copied' : 'Copy link'}
                 </Button>
                 <Button type="button" size="sm" variant="secondary" onClick={retireLink}>
                   Retire
@@ -302,7 +321,7 @@ export default function Communications() {
               <p className="mt-1 text-[10px] text-[var(--color-paper-faint)]">{routes?.length || 0} available</p>
             </div>
             <div className="max-h-72 overflow-y-auto lg:max-h-[37rem]">
-              {routes?.map((route) => (
+              {pageRoutes.map((route) => (
                 <button
                   key={route.routeRunId}
                   type="button"
@@ -319,10 +338,18 @@ export default function Communications() {
                     {route.lastMessage || `${route.stopCount} ${route.stopCount === 1 ? 'stop' : 'stops'} · No messages yet`}
                   </p>
                   <p className="mt-2 font-mono text-[9px] text-[var(--color-paper-faint)]">
-                    {route.routeRunId.slice(0, 12)} · {time(route.lastMessageAt || route.createdAt)}
+                    {route.routeRunId.slice(0, 12)} · {humanDateTime(route.lastMessageAt || route.createdAt)}
                   </p>
                 </button>
               ))}
+            </div>
+            <div className="border-t border-[var(--color-border-subtle)] p-4">
+              <Pagination
+                page={safeRoutesPage}
+                pageSize={ROUTES_PAGE_SIZE}
+                total={routes?.length || 0}
+                onPageChange={setRoutesPage}
+              />
             </div>
           </aside>
 
@@ -356,7 +383,18 @@ export default function Communications() {
                 )}
 
                 <div className="flex-1 space-y-3 overflow-y-auto bg-[var(--color-ink-deep)]/35 p-5">
-                  {!conversation.messages.length && (
+                  {messages.length > visibleMessages.length && (
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => setMessageWindow((count) => count + MESSAGES_PAGE_SIZE)}
+                        className="text-xs font-medium text-[var(--color-dispatch-orange)] hover:underline"
+                      >
+                        Show earlier messages ({messages.length - visibleMessages.length} more)
+                      </button>
+                    </div>
+                  )}
+                  {!messages.length && (
                     <div className="grid min-h-72 place-items-center text-center">
                       <div>
                         <MessageSquareText className="mx-auto text-[var(--color-paper-faint)]" size={24} />
@@ -365,7 +403,7 @@ export default function Communications() {
                       </div>
                     </div>
                   )}
-                  {conversation.messages.map((message) => {
+                  {visibleMessages.map((message) => {
                     const mine = message.senderType === 'business'
                     return (
                       <div key={message.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
@@ -374,7 +412,7 @@ export default function Communications() {
                         }`}>
                           <p className={`text-[10px] font-medium ${mine ? 'text-white/70' : 'text-[var(--color-paper-faint)]'}`}>{message.senderName}</p>
                           <p className={`mt-1 whitespace-pre-wrap text-sm leading-5 ${mine ? 'text-white' : 'text-[var(--color-paper)]'}`}>{message.body}</p>
-                          <p className={`mt-2 text-right font-mono text-[9px] ${mine ? 'text-white/60' : 'text-[var(--color-paper-faint)]'}`}>{time(message.createdAt)}</p>
+                          <p className={`mt-2 text-right font-mono text-[9px] ${mine ? 'text-white/60' : 'text-[var(--color-paper-faint)]'}`}>{humanDateTime(message.createdAt)}</p>
                         </div>
                       </div>
                     )

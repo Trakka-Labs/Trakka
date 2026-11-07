@@ -12,6 +12,8 @@ export const ROUTES = {
   businessDeliveryDetails: '/business/deliveries/:deliveryId',
   businessCreateDelivery: '/business/deliveries/new',
   businessDispatch: '/business/dispatch',
+  businessDeliveryFlow: '/business/delivery-flow',
+  businessActivity: '/business/activity',
   businessDrivers: '/business/drivers',
   businessCommunications: '/business/communications',
   riderDashboard: '/rider/dashboard',

@@ -5,6 +5,8 @@ import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
 import Loader from '../../../components/ui/Loader'
+import Pagination from '../../../components/ui/Pagination'
+import useBusy from '../../../hooks/useBusy'
 import {
   createDriver,
   getDrivers,
@@ -17,43 +19,52 @@ import {
 const EMPTY_DRIVER = { displayName: '', phone: '', capacity: '' }
 
 export default function Drivers() {
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(20)
   const [drivers, setDrivers] = useState(null)
+  const [total, setTotal] = useState(0)
+  const [busyPage, setBusyPage] = useState(false)
   const [form, setForm] = useState(EMPTY_DRIVER)
   const [capacityDrafts, setCapacityDrafts] = useState({})
-  const [busy, setBusy] = useState('')
+  const [busy, withBusy] = useBusy()
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
-  const load = async () => {
+  const load = async (targetPage = page) => {
     setError('')
+    setBusyPage(true)
     try {
-      const result = await getDrivers()
+      const result = await getDrivers({ page: targetPage, pageSize })
       setDrivers(result.drivers)
+      setTotal(result.total)
     } catch (err) {
       setError(err.message)
+    } finally {
+      setBusyPage(false)
     }
   }
 
   useEffect(() => {
-    load()
-  }, [])
+    load(page)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page])
 
-  const run = async (key, action, successMessage) => {
-    setBusy(key)
-    setError('')
-    setNotice('')
-    try {
-      const result = await action()
-      setDrivers(result.drivers)
-      setNotice(successMessage)
-      return true
-    } catch (err) {
-      setError(err.message)
-      return false
-    } finally {
-      setBusy('')
-    }
-  }
+  const run = (key, action, successMessage) =>
+    withBusy(key, async () => {
+      setError('')
+      setNotice('')
+      try {
+        await action()
+        // Reload the list (and totals) so newly onboarded drivers and
+        // capacity changes are reflected immediately.
+        await load()
+        setNotice(successMessage)
+        return true
+      } catch (err) {
+        setError(err.message)
+        return false
+      }
+    })
 
   const onboard = async (event) => {
     event.preventDefault()
@@ -86,13 +97,16 @@ export default function Drivers() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+      <header className="flex flex-col justify-between gap-4 border-b border-[var(--color-border-subtle)] pb-5 sm:flex-row sm:items-end">
         <div>
-          <p className="text-xs font-medium text-[var(--color-route-cyan)]">Driver operations</p>
-          <h1 className="mt-1 text-3xl font-medium tracking-[-0.045em] text-[var(--color-paper)] sm:text-4xl">
+          <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-dispatch-orange)]">
+            Driver operations <span className="text-[var(--color-paper-faint)]">·</span>
+            <span className="text-[var(--color-route-cyan)]">{total || drivers?.length || 0} on the team</span>
+          </p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-[-0.045em] text-[var(--color-paper)] sm:text-4xl">
             Drivers
           </h1>
-          <p className="mt-2 max-w-2xl text-sm text-[var(--color-paper-dim)]">
+          <p className="mt-1 max-w-2xl text-xs text-[var(--color-paper-dim)]">
             Onboard riders and control how many deliveries each person can carry per route.
           </p>
         </div>
@@ -103,25 +117,30 @@ export default function Drivers() {
 
       {error && <Alert tone="error">{error}</Alert>}
       {notice && (
-        <div role="status" className="flex items-center gap-2 rounded-lg border border-[var(--color-emerald)]/30 bg-[var(--color-emerald)]/10 p-3 text-sm text-[var(--color-emerald)]">
+        <div role="status" className="flex items-center gap-2 rounded-xl border border-[var(--color-emerald)]/30 bg-[var(--color-emerald)]/10 p-3 text-sm text-[var(--color-emerald)]">
           <Check size={15} /> {notice}
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {[
-          ['Total drivers', drivers?.length || 0],
-          ['Available now', available],
-          ['On active routes', (drivers?.length || 0) - available],
-        ].map(([label, value]) => (
-          <div key={label} className="dashboard-panel rounded-lg p-4">
-            <p className="text-xs text-[var(--color-paper-faint)]">{label}</p>
+          ['Total drivers', total || drivers?.length || 0, Bike],
+          ['Available now', available, Check],
+          ['On active routes', (drivers?.length || 0) - available, Gauge],
+        ].map(([label, value, Icon]) => (
+          <div key={label} className="dashboard-panel rounded-xl p-4 sm:p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[var(--color-paper-faint)]">{label}</span>
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--soft-fill)] text-[var(--color-route-cyan)]">
+                <Icon size={16} />
+              </span>
+            </div>
             <p className="mt-3 text-2xl font-semibold tabular-nums text-[var(--color-paper)]">{value}</p>
           </div>
         ))}
       </div>
 
-      <section className="dashboard-panel rounded-lg p-5 sm:p-6">
+      <section className="dashboard-panel rounded-xl p-5 sm:p-6">
         <div className="mb-5 flex items-center gap-3">
           <span className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--soft-fill)] text-[var(--color-route-cyan)]">
             <UserPlus size={17} />
@@ -166,10 +185,19 @@ export default function Drivers() {
         </form>
       </section>
 
-      <section className="dashboard-panel overflow-hidden rounded-lg">
-        <div className="border-b border-[var(--color-border-subtle)] p-5">
-          <h2 className="text-sm font-semibold text-[var(--color-paper)]">Driver team</h2>
-          <p className="mt-1 text-xs text-[var(--color-paper-faint)]">Capacity changes apply to future dispatch assignments.</p>
+      <section className="dashboard-panel overflow-hidden rounded-xl">
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--color-border-subtle)] p-5 sm:p-6">
+          <div>
+            <h2 className="text-sm font-semibold text-[var(--color-paper)]">Driver team</h2>
+            <p className="mt-1 text-xs text-[var(--color-paper-faint)]">
+              {total > (drivers?.length || 0)
+                ? `Showing page ${page} of drivers. Capacity changes apply to future dispatch assignments.`
+                : 'Capacity changes apply to future dispatch assignments.'}
+            </p>
+          </div>
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[var(--soft-fill)] text-[var(--color-route-cyan)]">
+            <Bike size={16} />
+          </span>
         </div>
         {!drivers?.length ? (
           <div className="p-10 text-center">
@@ -177,7 +205,12 @@ export default function Drivers() {
             <p className="mt-3 text-sm text-[var(--color-paper-dim)]">No drivers have been onboarded.</p>
           </div>
         ) : (
-          <div className="divide-y divide-[var(--color-border-subtle)]">
+          <>
+            <div
+              aria-busy={busyPage}
+              className={busyPage ? 'opacity-60 transition-opacity' : 'transition-opacity'}
+            >
+              <div className="divide-y divide-[var(--color-border-subtle)]">
             {drivers.map((driver) => (
               <article key={driver.id} className="grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
                 <div className="flex min-w-0 items-center gap-4">
@@ -224,6 +257,16 @@ export default function Drivers() {
               </article>
             ))}
           </div>
+            </div>
+          <div className="border-t border-[var(--color-border-subtle)] p-4 sm:px-6">
+            <Pagination
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+            />
+          </div>
+          </>
         )}
       </section>
     </div>

@@ -1,43 +1,50 @@
 /**
  * Visible (non-headless) automation for the Trakka dashboard.
- * On first load it asks which flow to run: create delivery, or create driver.
- * A persistent profile keeps the login; the first run may need a one-time
- * manual login (the script waits for it). Fields are typed with a visible
- * keystroke delay so a human watching the window sees every input.
+ * First it asks which stack to run against (local dev or the deployed
+ * production site), then which flow: create delivery, or create driver.
+ * A persistent per-environment profile keeps the login; the first run on a
+ * stack may need a one-time manual login (the script waits for it). Fields
+ * are typed with a visible keystroke delay so a human watching the window
+ * sees every input.
  *
  * Run:  node e2e/create-order-live.mjs
- * Env:  E2E_APP_URL        (default https://www.trakka.online)
+ * Env:  E2E_ENV            "local" | "remote" to skip the stack prompt
+ *       E2E_APP_URL        explicit URL — overrides both (no prompt)
  *       E2E_BROWSER_PATH   (default: system Brave/Chrome, via browser.mjs)
- *       E2E_PROFILE_DIR    (default ~/.trakka-automation-profile)
+ *       E2E_PROFILE_DIR    (default: ~/.trakka-automation-profile[-local])
  *       E2E_PHOTO          optional path to a package photo (JPEG/PNG/WebP, <2 MB)
  *       E2E_TASK           optional "delivery" | "driver" to skip the prompt
  */
 import { existsSync } from 'node:fs'
-import { homedir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { resolve } from 'node:path'
 import { createInterface } from 'node:readline/promises'
 import puppeteer from 'puppeteer-core'
 import { browserExecutable, expect } from './browser.mjs'
+import { askEnvironment, profileDirFor } from './target.mjs'
 
-const APP_URL = (process.env.E2E_APP_URL || 'https://www.trakka.online').replace(/\/$/, '')
+const TARGET = await askEnvironment()
+const APP_URL = TARGET.url
 const appUrl = (path = '/') => `${APP_URL}${path}`
 
 const VIEW_DELAY_MS = Number(process.env.E2E_TYPE_DELAY || 25)
 const STEP_PAUSE_MS = Number(process.env.E2E_STEP_PAUSE || 500)
 
-const PROFILE_DIR = process.env.E2E_PROFILE_DIR
-  ? resolve(process.env.E2E_PROFILE_DIR)
-  : join(homedir(), '.trakka-automation-profile')
+const PROFILE_DIR = profileDirFor(TARGET.env)
 
 const PHOTO = process.env.E2E_PHOTO ? resolve(process.env.E2E_PHOTO) : null
 
 // ------------------------------------------------------------ driver payload
 
 const DRIVER = {
-  displayName: 'Osaze Iyamu',
-  phone: '08031459029',
-  capacity: '12',
+  displayName: 'Ben Every',
+  phone: '08031239029',
+  capacity: '9',
 }
+
+// Seeding overrides: a background loop can pass unique values per run.
+if (process.env.E2E_DRIVER_NAME) DRIVER.displayName = process.env.E2E_DRIVER_NAME
+if (process.env.E2E_DRIVER_PHONE) DRIVER.phone = process.env.E2E_DRIVER_PHONE
+if (process.env.E2E_DRIVER_CAPACITY) DRIVER.capacity = process.env.E2E_DRIVER_CAPACITY
 
 async function askTask() {
   const forced = process.env.E2E_TASK?.toLowerCase()
@@ -73,6 +80,13 @@ const ORDER = {
   declaredValue: '25000',
   notes: 'Fragile item. Keep upright and call before arrival.',
 }
+
+// Seeding overrides for unique recipients per run.
+if (process.env.E2E_RECIPIENT_NAME) ORDER.recipientName = process.env.E2E_RECIPIENT_NAME
+if (process.env.E2E_RECIPIENT_PHONE) ORDER.recipientPhone = process.env.E2E_RECIPIENT_PHONE
+if (process.env.E2E_PICKUP_PHONE) ORDER.pickupContactPhone = process.env.E2E_PICKUP_PHONE
+if (process.env.E2E_PACKAGE_DESC) ORDER.packageDescription = process.env.E2E_PACKAGE_DESC
+if (process.env.E2E_DECLARED_VALUE) ORDER.declaredValue = process.env.E2E_DECLARED_VALUE
 
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms))
 
@@ -156,7 +170,7 @@ async function clickButtonByText(page, text) {
 const browser = await puppeteer.launch({
   executablePath: browserExecutable(),
   headless: false, // always visible — this is the point of the script
-  slowMo: 60,
+  slowMo: Number(process.env.E2E_SLOWMO || 60),
   userDataDir: PROFILE_DIR, // persisted login across runs
   args: [
     '--no-sandbox',
@@ -196,6 +210,8 @@ try {
 
   // 1. Land on the homepage, then let the user log in by hand. The script
   // waits until a signed-in state is visible, then continues automatically.
+  console.log(`→ target: ${TARGET.env === 'local' ? 'LOCAL dev' : 'REMOTE / deployed'} — ${APP_URL}`)
+  console.log(`→ browser profile: ${PROFILE_DIR}`)
   console.log(`→ opening ${APP_URL} …`)
   await page.goto(APP_URL, { waitUntil: 'load', timeout: 60_000 })
   await page.bringToFront()
@@ -210,8 +226,26 @@ try {
     node?.scrollIntoView({ block: 'center', behavior: 'smooth' })
     node?.click()
   })
-  console.log('\n⏳ The window is on the site — enter your email and password and log in.')
-  console.log('   The script continues automatically once you are signed in…\n')
+  console.log('\n⏳ The window is on the site — signing in (or waiting for a saved session)…\n')
+
+  // Auto-login: if the saved session didn't persist, type the credentials visibly.
+  const EMAIL = process.env.E2E_EMAIL
+  const PASSWORD = process.env.E2E_PASSWORD
+  try {
+    await page.waitForSelector('input[type="password"]', { visible: true, timeout: 6_000 })
+  } catch {
+    /* No login form appeared — the profile is probably already signed in. */
+  }
+  if ((await page.$('input[type="password"]')) && EMAIL && PASSWORD) {
+    console.log(`→ no saved session — logging in as ${EMAIL} (typed visibly)`)
+    await page.waitForSelector('#email', { visible: true, timeout: 15_000 })
+    await typeVisible(page, '#email', EMAIL)
+    await typeVisible(page, 'input[type="password"]', PASSWORD)
+    await clickButtonByText(page, 'Sign in')
+    await sleep(1_500)
+  } else if (!(EMAIL && PASSWORD)) {
+    console.log('→ set E2E_EMAIL/E2E_PASSWORD to enable auto-login; waiting for a manual login…')
+  }
 
   await page.waitForFunction(
     () => {
@@ -292,8 +326,8 @@ async function runCreateDelivery(page) {
     return text.match(/TRK-\d{4}-[0-9A-Z]+/)?.[0] ?? 'tracking id not shown'
   })
   console.log(`\n🎉 Delivery created — tracking id: ${trackingId}`)
-  console.log('   The window stays open for 10s so you can see the success page…')
-  await sleep(10_000)
+  console.log('   The window stays open so you can see the success page…')
+  await sleep(Number(process.env.E2E_SUCCESS_HOLD || 10_000))
 }
 
 // ------------------------------------------------------------------ driver
@@ -317,6 +351,6 @@ async function runCreateDriver(page) {
     /\S[\S ]*?was added to your driver team/,
   )?.[0]
   console.log(`\n🎉 Driver onboarded — "${createdName ?? DRIVER.displayName}"`)
-  console.log('   The window stays open for 10s so you can see the team…')
-  await sleep(10_000)
+  console.log('   The window stays open so you can see the team…')
+  await sleep(Number(process.env.E2E_SUCCESS_HOLD || 10_000))
 }

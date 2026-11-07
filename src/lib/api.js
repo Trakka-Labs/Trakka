@@ -1,13 +1,17 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
 async function request(path, options = {}) {
-  const { headers = {}, ...requestOptions } = options
+  const { headers = {}, body, ...requestOptions } = options
+  // Fastify rejects `content-type: application/json` with an empty body, so
+  // only declare JSON when a body is actually being sent (POST endpoints like
+  // rider accept/decline and batch cancel are body-less).
   const response = await fetch(`${API_BASE_URL}${path}`, {
     credentials: 'include',
     headers: {
-      'content-type': 'application/json',
+      ...(body === undefined ? {} : { 'content-type': 'application/json' }),
       ...headers,
     },
+    ...(body === undefined ? {} : { body }),
     ...requestOptions,
   })
 
@@ -108,9 +112,9 @@ export async function createDelivery(payload) {
   return order
 }
 
-export async function getDeliveries() {
-  const { deliveries } = await request('/orders')
-  return deliveries
+// Returns the paginated payload: { deliveries, total, page, pageSize }.
+export async function getDeliveries({ page = 1, pageSize = 20 } = {}) {
+  return request(`/orders?page=${page}&pageSize=${pageSize}`)
 }
 
 export async function getDelivery(deliveryId) {
@@ -122,12 +126,31 @@ export function getDashboard() {
   return request('/dashboard')
 }
 
+export function getBreadcrumbs(path) {
+  return request(`/navigation/breadcrumbs?path=${encodeURIComponent(path)}`)
+}
+
+// Paginated full lists behind the dashboard "View more" links.
+export function getDeliveryFlow({ page = 1, pageSize = 12 } = {}) {
+  return request(`/dashboard/trips?page=${page}&pageSize=${pageSize}`)
+}
+
+export function getActivityFeed({ page = 1, pageSize = 20 } = {}) {
+  return request(`/dashboard/activity?page=${page}&pageSize=${pageSize}`)
+}
+
 export function getDispatchWorkspace() {
   return request('/dispatch')
 }
 
-export function getDrivers() {
-  return request('/drivers')
+export function getDrivers({ page = 1, pageSize = 20 } = {}) {
+  return request(`/drivers?page=${page}&pageSize=${pageSize}`)
+}
+
+export function searchWorkspace(query, limit = 6, page = 1) {
+  return request(
+    `/search?q=${encodeURIComponent(query)}&limit=${limit}&page=${page}`,
+  )
 }
 
 export function createDriver(payload) {
@@ -248,6 +271,22 @@ export function getRiderRoute(routeRunId, token) {
   })
 }
 
+export function acceptRiderAssignment(routeRunId, token) {
+  return request(`/rider/routes/${encodeURIComponent(routeRunId)}/assignment/accept`, {
+    method: 'POST',
+    headers: { 'x-rider-route-token': token },
+    body: '{}',
+  })
+}
+
+export function declineRiderAssignment(routeRunId, token) {
+  return request(`/rider/routes/${encodeURIComponent(routeRunId)}/assignment/decline`, {
+    method: 'POST',
+    headers: { 'x-rider-route-token': token },
+    body: '{}',
+  })
+}
+
 export function sendRiderPing(routeRunId, token, ping) {
   return request(`/rider/routes/${encodeURIComponent(routeRunId)}/ping`, {
     method: 'POST',
@@ -302,6 +341,17 @@ export function saveDispatchSequence(batchId, taskIds) {
 
 export function assignDispatchBatch(batchId, riderId) {
   return request(`/dispatch/batches/${batchId}/assign`, {
+    method: 'POST',
+    body: json({ riderId }),
+  })
+}
+
+export function discontinueDispatchBatch(batchId) {
+  return request(`/dispatch/batches/${batchId}/cancel`, { method: 'POST' })
+}
+
+export function assignSingleDelivery(orderId, riderId) {
+  return request(`/dispatch/orders/${orderId}/assign`, {
     method: 'POST',
     body: json({ riderId }),
   })

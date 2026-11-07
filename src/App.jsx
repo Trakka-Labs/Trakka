@@ -17,6 +17,8 @@ const Deliveries = lazy(() => import('./pages/business/dashboard/Deliveries'))
 const DeliveryDetails = lazy(() => import('./pages/business/dashboard/DeliveryDetails'))
 const CreateDelivery = lazy(() => import('./pages/business/dashboard/CreateDelivery'))
 const Dispatch = lazy(() => import('./pages/business/dashboard/Dispatch'))
+const DeliveryFlow = lazy(() => import('./pages/business/dashboard/DeliveryFlow'))
+const ActivityFeed = lazy(() => import('./pages/business/dashboard/ActivityFeed'))
 const Drivers = lazy(() => import('./pages/business/dashboard/Drivers'))
 const Communications = lazy(() => import('./pages/business/dashboard/Communications'))
 const RiderDashboard = lazy(() => import('./pages/rider/RiderDashboard'))
@@ -61,6 +63,12 @@ export function AppRoutes() {
         </Route>
         <Route path={ROUTES.businessDispatch} element={<DashboardLayout />}>
           <Route index element={<Dispatch />} />
+        </Route>
+        <Route path={ROUTES.businessDeliveryFlow} element={<DashboardLayout />}>
+          <Route index element={<DeliveryFlow />} />
+        </Route>
+        <Route path={ROUTES.businessActivity} element={<DashboardLayout />}>
+          <Route index element={<ActivityFeed />} />
         </Route>
         <Route path={ROUTES.businessDrivers} element={<DashboardLayout />}>
           <Route index element={<Drivers />} />

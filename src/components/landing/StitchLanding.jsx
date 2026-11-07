@@ -2,7 +2,6 @@ import { useState } from 'react'
 import {
   CheckCircle2,
   CreditCard,
-  LayoutDashboard,
   Link2,
   Map,
   MapPin,
@@ -267,75 +266,6 @@ function MvpCapabilities() {
   )
 }
 
-function ProductAccess() {
-  const entries = [
-    {
-      icon: LayoutDashboard,
-      eyebrow: 'Fleet owner',
-      title: 'Business operations dashboard',
-      body: 'Review delivery volume, live dispatch routes, trip activity, and fleet-level operating metrics.',
-      label: 'View business dashboard',
-      to: ROUTES.businessDashboard,
-    },
-    {
-      icon: Smartphone,
-      eyebrow: 'Rider',
-      title: 'Mobile route workspace',
-      body: 'Review the exact stop sequence, current task, navigation actions, delays, and incoming assignments.',
-      label: 'View rider dashboard',
-      to: ROUTES.riderDashboard,
-    },
-    {
-      icon: MapPin,
-      eyebrow: 'Customer',
-      title: 'Live customer tracking',
-      body: 'Preview the public, no-account tracking map, dynamic ETA, delivery timeline, rider identity, and OTP.',
-      label: 'View customer dashboard',
-      to: ROUTES.customerDashboard,
-    },
-  ]
-
-  return (
-    <section id="access" className="bg-[var(--lp-panel)] py-20 sm:py-24">
-      <div className="stitch-container">
-        <div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr] lg:items-end">
-          <div>
-            <p className="stitch-label">Use the product</p>
-            <h2 className="mt-4 text-4xl font-bold tracking-[-0.04em] text-[var(--lp-text)]">Choose where you need to go</h2>
-          </div>
-          <p className="max-w-xl text-base leading-7 text-[var(--lp-muted)] lg:justify-self-end">
-            All three prototype views are freely accessible for review. No registration, login, setup form, or secure tracking token is required at this stage.
-          </p>
-        </div>
-
-        <div className="mt-10 grid gap-4 lg:grid-cols-3">
-          {entries.map(({ icon: Icon, eyebrow, title, body, label, to }) => (
-            <article key={title} className="flex min-h-72 flex-col border border-[var(--lp-border)] bg-[var(--lp-surface)] p-6">
-              <div className="flex items-center justify-between">
-                <span className="grid h-10 w-10 place-items-center rounded bg-[var(--lp-panel)] text-[var(--lp-navy)]">
-                  <Icon size={19} strokeWidth={1.8} />
-                </span>
-                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--lp-orange)]">{eyebrow}</span>
-              </div>
-              <h3 className="mt-8 text-xl font-bold tracking-[-0.025em] text-[var(--lp-text)]">{title}</h3>
-              <p className="mt-3 flex-1 text-sm leading-6 text-[var(--lp-muted)]">{body}</p>
-              <Link to={to} className="stitch-button stitch-button--outline mt-7 self-start">{label}</Link>
-            </article>
-          ))}
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border border-[var(--lp-border)] bg-[var(--lp-bg)] px-5 py-4 text-sm text-[var(--lp-muted)]">
-          <span>Want to review the existing account flow as well?</span>
-          <div className="flex items-center gap-4">
-            <Link to={ROUTES.businessSignup} className="font-semibold text-[var(--lp-text)] underline underline-offset-4">Create account</Link>
-            <Link to={ROUTES.businessLogin} className="font-semibold text-[var(--lp-text)] underline underline-offset-4">Business login</Link>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 function FinalCta() {
   return (
     <section className="bg-[var(--lp-navy)] px-4 py-20 text-center text-white sm:py-24">
@@ -390,7 +320,6 @@ export default function StitchLanding() {
         <Operations />
         <Workflow />
         <MvpCapabilities />
-        <ProductAccess />
         <FinalCta />
       </main>
       <LandingFooter />

@@ -7,7 +7,9 @@ import Button from '../../../components/ui/Button'
 import EmptyState from '../../../components/dashboard/EmptyState'
 import { STATUS_META } from '../../../lib/dashboardConfig'
 import { getDeliveries } from '../../../lib/api'
+import Pagination from '../../../components/ui/Pagination'
 import { businessDeliveryDetailsRoute, ROUTES } from '../../../lib/routes'
+import { humanDate } from '../../../lib/formatDate'
 
 function formatNaira(value) {
   return new Intl.NumberFormat('en-NG', {
@@ -17,18 +19,6 @@ function formatNaira(value) {
   }).format(Number(value) || 0)
 }
 
-function formatDate(value) {
-  if (!value) return '—'
-  // Postgres ISO timestamps and plain dates both parse; the old
-  // `${value}T12:00:00` stitch produced Invalid Date for timestamps.
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return String(value)
-  return new Intl.DateTimeFormat('en-NG', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(parsed)
-}
 
 function statusMeta(status) {
   return STATUS_META[status] || {
@@ -107,7 +97,7 @@ function DesktopTable({ deliveries, onOpen }) {
                 {delivery.serviceType}
               </td>
               <td className="whitespace-nowrap px-5 py-4 text-xs text-[var(--color-paper-dim)]">
-                {formatDate(delivery.requestedDate)}
+                {humanDate(delivery.requestedDate)}
               </td>
               <td className="whitespace-nowrap px-5 py-4 text-xs font-medium text-[var(--color-paper)]">
                 {formatNaira(delivery.deliveryFee)}
@@ -160,7 +150,7 @@ function MobileList({ deliveries }) {
               <div>
                 <dt className="text-[10px] text-[var(--color-paper-faint)]">Requested</dt>
                 <dd className="mt-1 text-xs text-[var(--color-paper-dim)]">
-                  {formatDate(delivery.requestedDate)}
+                  {humanDate(delivery.requestedDate)}
                 </dd>
               </div>
               <div>
@@ -179,21 +169,31 @@ function MobileList({ deliveries }) {
 
 export default function Deliveries() {
   const navigate = useNavigate()
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(20)
   const [deliveries, setDeliveries] = useState(null)
+  const [total, setTotal] = useState(0)
+  const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  const loadDeliveries = async () => {
+  const loadDeliveries = async (targetPage = page) => {
     setError('')
+    setBusy(true)
     try {
-      setDeliveries(await getDeliveries())
+      const result = await getDeliveries({ page: targetPage, pageSize })
+      setDeliveries(result.deliveries)
+      setTotal(result.total)
     } catch (err) {
       setError(err.message)
+    } finally {
+      setBusy(false)
     }
   }
 
   useEffect(() => {
-    loadDeliveries()
-  }, [])
+    loadDeliveries(page)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page])
 
   return (
     <div>
@@ -204,7 +204,9 @@ export default function Deliveries() {
             Deliveries
           </h1>
           <p className="mt-2 text-sm text-[var(--color-paper-dim)]">
-            {deliveries ? `${deliveries.length} ${deliveries.length === 1 ? 'delivery' : 'deliveries'}` : 'All business deliveries'}
+            {deliveries
+              ? `${total || deliveries.length} ${(total || deliveries.length) === 1 ? 'delivery' : 'deliveries'}`
+              : 'All business deliveries'}
           </p>
         </div>
         <Button as={Link} to={ROUTES.businessCreateDelivery} size="sm" className="self-start">
@@ -215,7 +217,7 @@ export default function Deliveries() {
       {error && (
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Alert className="flex-1">{error}</Alert>
-          <Button type="button" variant="secondary" size="sm" onClick={loadDeliveries}>
+          <Button type="button" variant="secondary" size="sm" onClick={() => loadDeliveries()}>
             <RefreshCw size={14} aria-hidden="true" /> Retry
           </Button>
         </div>
@@ -223,7 +225,7 @@ export default function Deliveries() {
 
       {!deliveries && !error && <DeliveryListSkeleton />}
 
-      {deliveries?.length === 0 && (
+      {deliveries?.length === 0 && !error && (
         <EmptyState
           icon={Package}
           title="No deliveries yet"
@@ -233,11 +235,24 @@ export default function Deliveries() {
 
       {deliveries?.length > 0 && (
         <section className="dashboard-panel overflow-hidden rounded-lg" aria-label="All deliveries">
-          <DesktopTable
-            deliveries={deliveries}
-            onOpen={(deliveryId) => navigate(businessDeliveryDetailsRoute(deliveryId))}
-          />
-          <MobileList deliveries={deliveries} />
+          <div aria-busy={busy}>
+            <DesktopTable
+              deliveries={deliveries}
+              onOpen={(deliveryId) => navigate(businessDeliveryDetailsRoute(deliveryId))}
+            />
+            <MobileList deliveries={deliveries} />
+          </div>
+          <div className="border-t border-[var(--color-border-subtle)] p-4">
+            <Pagination
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={(nextPage) => {
+                setPage(nextPage)
+                document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+            />
+          </div>
         </section>
       )}
     </div>

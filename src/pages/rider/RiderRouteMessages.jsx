@@ -3,16 +3,24 @@ import {
   Bike, CheckCircle2, CloudRain, MessageSquareText, Navigation,
   Send, ShieldCheck, TriangleAlert,
 } from 'lucide-react'
-import { useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 import Alert from '../../components/ui/Alert'
 import Button from '../../components/ui/Button'
 import Loader from '../../components/ui/Loader'
+import Pagination from '../../components/ui/Pagination'
+import Breadcrumbs from '../../components/ui/Breadcrumbs'
 import Logo from '../../components/ui/Logo'
+import usePolling from '../../hooks/usePolling'
 import {
   getRiderRoute, getRiderRouteMessages, prepareDeliveryVerification,
   reportRiderDelay, sendRiderPing, sendRiderRouteMessage, updateStopStatus,
   verifyDeliveryOtp,
 } from '../../lib/api'
+import { ORDER_STATUS_META, ORDER_STATUSES } from '../../lib/statuses'
+import { humanTime } from '../../lib/formatDate'
+
+const STOPS_PAGE_SIZE = 5
+const MESSAGES_PAGE_SIZE = 30
 
 const QUICK_REPLIES = ['Traffic delay', 'Road blocked', 'Wrong address', 'I need assistance']
 
@@ -24,22 +32,19 @@ const DELAY_REASONS = [
   { value: 'other', label: 'Other incident' },
 ]
 
-const STATUS_ACTIONS = [
-  { value: 'pickup_in_progress', label: 'At pickup' },
-  { value: 'picked_up', label: 'Picked up' },
-  { value: 'in_transit', label: 'En route' },
-  { value: 'arriving', label: 'Arriving' },
-]
+// Labels come from the shared status vocabulary; only the two rider-voice
+// overrides differ ("Confirmed", "At pickup").
+const ORDER_STATUS_LABELS = Object.fromEntries(
+  Object.entries(ORDER_STATUS_META).map(([key, meta]) => [key, meta.label]),
+)
+ORDER_STATUS_LABELS.ready_for_dispatch = 'Confirmed'
+ORDER_STATUS_LABELS.pickup_in_progress = 'At pickup'
+if (!ORDER_STATUS_LABELS.returned) ORDER_STATUS_LABELS.returned = 'Returned'
 
-const ORDER_STATUS_LABELS = {
-  ready_for_dispatch: 'Confirmed', assigned: 'Assigned', accepted: 'Accepted',
-  pickup_in_progress: 'At pickup', picked_up: 'Picked up', in_transit: 'En route',
-  arriving: 'Arriving', delivered: 'Delivered', failed: 'Failed', returned: 'Returned',
-}
+const STATUS_ACTIONS = ['pickup_in_progress', 'picked_up', 'in_transit', 'arriving']
+  .filter((value) => ORDER_STATUSES.includes(value))
+  .map((value) => ({ value, label: ORDER_STATUS_LABELS[value] }))
 
-function time(value) {
-  return new Intl.DateTimeFormat('en-NG', { hour: 'numeric', minute: '2-digit' }).format(new Date(value))
-}
 
 function readToken(routeRunId) {
   const storageKey = `trakka-rider-route-access:${routeRunId}`
@@ -51,7 +56,7 @@ function readToken(routeRunId) {
 export default function RiderRouteMessages() {
   const { routeRunId } = useParams()
   const token = useMemo(() => readToken(routeRunId), [routeRunId])
-  const [tab, setTab] = useState('stops')
+  const [tab, setTab] = useState(() => new URLSearchParams(window.location.search).get('tab') === 'chat' ? 'chat' : 'stops')
   const [route, setRoute] = useState(null)
   const [conversation, setConversation] = useState(null)
   const [draft, setDraft] = useState('')
@@ -62,6 +67,8 @@ export default function RiderRouteMessages() {
   const [otpValue, setOtpValue] = useState('')
   const [delayFor, setDelayFor] = useState(false)
   const [pingState, setPingState] = useState('idle')
+  const [stopsPage, setStopsPage] = useState(1)
+  const [messageWindow, setMessageWindow] = useState(MESSAGES_PAGE_SIZE)
   const sending = useRef(false)
   const endRef = useRef(null)
 
@@ -95,12 +102,13 @@ export default function RiderRouteMessages() {
   useEffect(() => {
     loadStops()
     loadMessages()
-    const interval = window.setInterval(() => {
-      if (tab === 'stops') loadStops(true)
-      else loadMessages(true)
-    }, 5_000)
-    return () => window.clearInterval(interval)
-  }, [loadStops, loadMessages, tab])
+  }, [loadStops, loadMessages])
+
+  // 5s refresh of whichever tab is active; usePolling pauses while hidden.
+  usePolling(
+    (tab === 'stops' ? loadStops : loadMessages).bind(null, true),
+    { interval: 5_000 },
+  )
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -202,14 +210,27 @@ export default function RiderRouteMessages() {
   }
 
   const stops = route?.stops ?? []
+  const stopsTotalPages = Math.max(1, Math.ceil(stops.length / STOPS_PAGE_SIZE))
+  const safeStopsPage = Math.min(stopsPage, stopsTotalPages)
+  const pageStops = stops.slice(
+    (safeStopsPage - 1) * STOPS_PAGE_SIZE,
+    safeStopsPage * STOPS_PAGE_SIZE,
+  )
+  const riderMessages = conversation?.messages || []
+  const visibleRiderMessages = riderMessages.slice(-messageWindow)
   const activeStop = stops.find((stop) => !['completed', 'failed', 'skipped'].includes(stop.status))
   const completedCount = stops.length - stops.filter((stop) => !['completed', 'failed', 'skipped'].includes(stop.status)).length
 
   return (
     <div className="min-h-dvh bg-[var(--color-ink)]">
       <header className="sticky top-0 z-20 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]/95 px-4 py-3 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-2xl items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5"><Logo size={27} /><span className="font-semibold text-[var(--color-paper)]">Trakka</span></div>
+          <div className="mx-auto flex max-w-2xl items-center justify-between gap-4">
+            <Link
+              to={`/rider/dashboard#${new URLSearchParams({ access: token, route: routeRunId }).toString()}`}
+              className="flex min-h-11 items-center gap-2.5 rounded-lg pr-2"
+            >
+              <Logo size={27} /><span className="font-semibold text-[var(--color-paper)]">Trakka</span>
+            </Link>
           <span className="flex items-center gap-2 text-xs text-[var(--color-paper-faint)]">
             <Bike size={14} /> {route?.route?.riderName ?? 'Rider'} · {completedCount}/{route?.route?.stopCount ?? 0} stops
           </span>
@@ -217,6 +238,7 @@ export default function RiderRouteMessages() {
       </header>
 
       <main className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-2xl flex-col px-3 py-4 sm:px-5">
+        <Breadcrumbs className="mb-3 px-1" />
         {error && <Alert tone="error" className="mb-4">{error}</Alert>}
         {notice && <Alert tone="success" className="mb-4">{notice}</Alert>}
         {pingState !== 'live' && tab === 'stops' && pingState !== 'idle' && (
@@ -265,7 +287,7 @@ export default function RiderRouteMessages() {
             {route.route?.delayMinutes > 0 && (
               <Alert tone="neutral">{route.route?.delayMinutes} min of reported delays on this route today.</Alert>
             )}
-            {stops.map((stop) => (
+            {pageStops.map((stop) => (
               <article key={stop.orderId} className="dashboard-panel rounded-lg p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -352,6 +374,12 @@ export default function RiderRouteMessages() {
                 )}
               </article>
             ))}
+            <Pagination
+              page={safeStopsPage}
+              pageSize={STOPS_PAGE_SIZE}
+              total={stops.length}
+              onPageChange={setStopsPage}
+            />
           </section>
         )}
 
@@ -374,14 +402,25 @@ export default function RiderRouteMessages() {
                   <div><MessageSquareText className="mx-auto text-[var(--color-paper-faint)]" size={24} /><p className="mt-3 text-sm text-[var(--color-paper-dim)]">No route messages yet.</p></div>
                 </div>
               )}
-              {conversation.messages.map((message) => {
+              {riderMessages.length > visibleRiderMessages.length && (
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => setMessageWindow((count) => count + MESSAGES_PAGE_SIZE)}
+                    className="text-xs font-medium text-[var(--color-dispatch-orange)] hover:underline"
+                  >
+                    Show earlier messages ({riderMessages.length - visibleRiderMessages.length} more)
+                  </button>
+                </div>
+              )}
+              {visibleRiderMessages.map((message) => {
                 const mine = message.senderType === 'rider'
                 return (
                   <div key={message.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[86%] rounded-lg px-4 py-3 ${mine ? 'bg-[var(--color-route-cyan)] text-white' : 'border border-[var(--color-border-subtle)] bg-[var(--color-surface)]'}`}>
                       <p className={`text-[10px] ${mine ? 'text-white/70' : 'text-[var(--color-paper-faint)]'}`}>{message.senderName}</p>
                       <p className={`mt-1 whitespace-pre-wrap text-sm leading-5 ${mine ? 'text-white' : 'text-[var(--color-paper)]'}`}>{message.body}</p>
-                      <p className={`mt-2 text-right font-mono text-[9px] ${mine ? 'text-white/60' : 'text-[var(--color-paper-faint)]'}`}>{time(message.createdAt)}</p>
+                      <p className={`mt-2 text-right font-mono text-[9px] ${mine ? 'text-white/60' : 'text-[var(--color-paper-faint)]'}`}>{humanTime(message.createdAt)}</p>
                     </div>
                   </div>
                 )
@@ -428,4 +467,3 @@ function TabButton({ active, onClick, children, tone = 'default' }) {
     </button>
   )
 }
-
