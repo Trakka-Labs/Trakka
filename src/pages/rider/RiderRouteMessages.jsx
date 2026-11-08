@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Bike, CheckCircle2, CloudRain, MessageSquareText, Navigation,
-  Send, ShieldCheck, TriangleAlert,
+  QrCode, Send, ShieldCheck, TriangleAlert, X,
 } from 'lucide-react'
+import QRCode from 'qrcode'
 import { Link, useParams } from 'react-router'
 import Alert from '../../components/ui/Alert'
 import Button from '../../components/ui/Button'
@@ -66,6 +67,8 @@ export default function RiderRouteMessages() {
   const [otpFor, setOtpFor] = useState(null)
   const [otpValue, setOtpValue] = useState('')
   const [delayFor, setDelayFor] = useState(false)
+  const [qrFor, setQrFor] = useState(null)
+  const [qrImage, setQrImage] = useState('')
   const [pingState, setPingState] = useState('idle')
   const [stopsPage, setStopsPage] = useState(1)
   const [messageWindow, setMessageWindow] = useState(MESSAGES_PAGE_SIZE)
@@ -175,6 +178,10 @@ export default function RiderRouteMessages() {
       } else if (action === 'prepare') {
         const result = await prepareDeliveryVerification(routeRunId, token, orderId)
         await loadStops(true)
+        if (result.qrUrl) {
+          setQrFor({ orderId, url: result.qrUrl })
+          setQrImage(await QRCode.toDataURL(result.qrUrl, { width: 520, margin: 1 }))
+        }
         if (result.testCode) {
           setOtpFor(orderId)
           setNotice(`Verification code (test mode): ${result.testCode}. Relay it to the customer.`)
@@ -300,6 +307,15 @@ export default function RiderRouteMessages() {
                   <div className="text-right">
                     <span className="text-[10px] text-[var(--color-paper-faint)]">{ORDER_STATUS_LABELS[stop.orderStatus] ?? stop.orderStatus}</span>
                     <p className="mt-1 font-mono text-[9px] text-[var(--color-paper-faint)]">{stop.trackingId}</p>
+                    <span
+                      className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
+                        stop.paymentType === 'pay_on_delivery'
+                          ? 'bg-[var(--color-dispatch-orange)]/15 text-[var(--color-dispatch-orange)]'
+                          : 'bg-[var(--color-emerald)]/15 text-[var(--color-mint)]'
+                      }`}
+                    >
+                      {stop.paymentType === 'pay_on_delivery' ? 'Pay on delivery' : 'Prepaid'}
+                    </span>
                   </div>
                 </div>
 
@@ -348,6 +364,16 @@ export default function RiderRouteMessages() {
                     <span className="flex items-center gap-1 rounded-full bg-[var(--soft-fill)] px-3 py-1.5 text-xs text-[var(--color-route-cyan)]">
                       <CheckCircle2 size={12} /> Code verified
                     </span>
+                  )}
+                  {stop.verificationState !== 'verified' && (
+                    <button
+                      type="button"
+                      disabled={busyStop === stop.orderId}
+                      onClick={() => act(stop.orderId, 'prepare')}
+                      className="flex items-center gap-1.5 rounded-full border border-[var(--color-route-cyan)]/40 px-3 py-1.5 text-xs text-[var(--color-route-cyan)] hover:border-[var(--color-route-cyan)] disabled:opacity-50"
+                    >
+                      <QrCode size={13} /> Show QR code
+                    </button>
                   )}
                   <button
                     type="button"
@@ -445,6 +471,49 @@ export default function RiderRouteMessages() {
           </section>
         )}
       </main>
+
+      {qrFor && (
+        <div
+          role="presentation"
+          className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-5 backdrop-blur-sm"
+          onClick={() => setQrFor(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Delivery confirmation QR code"
+            className="w-full max-w-sm rounded-2xl bg-[var(--color-surface)] p-5 text-center shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div className="text-left">
+                <p className="text-[10px] uppercase tracking-wider text-[var(--color-paper-faint)]">Customer scan</p>
+                <h2 className="mt-0.5 text-base font-semibold text-[var(--color-paper)]">Confirm delivery</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setQrFor(null)}
+                aria-label="Close QR code"
+                className="rounded-full p-1.5 text-[var(--color-paper-faint)] hover:bg-[var(--soft-hover)]"
+              >
+                <X size={17} />
+              </button>
+            </div>
+            {qrImage ? (
+              <img src={qrImage} alt="Delivery confirmation QR code" className="mx-auto mt-4 w-full max-w-[260px] rounded-lg bg-white p-2" />
+            ) : (
+              <Loader size={24} className="mx-auto mt-8" />
+            )}
+            <p className="mt-4 text-xs leading-relaxed text-[var(--color-paper-dim)]">
+              Ask the customer to scan this code with their phone camera. Scanning confirms
+              hand-off and completes the delivery — no code to read out.
+            </p>
+            <Button type="button" variant="secondary" className="mt-4 w-full" onClick={() => setQrFor(null)}>
+              Done
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

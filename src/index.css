@@ -503,3 +503,38 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Route monitor map markers (Leaflet divIcons). */
+.trakka-route-pin-wrap,
+.trakka-route-rider-wrap {
+  background: transparent;
+  border: 0;
+}
+.trakka-route-pin {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 6px rgba(11, 28, 48, 0.35);
+}
+.trakka-route-rider {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: #168353;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 4px rgba(22, 131, 83, 0.18);
+  transform-origin: center;
+}

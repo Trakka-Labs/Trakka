@@ -21,6 +21,10 @@ const STATIC_TRAILS = {
     { label: 'Dashboard', href: ROUTES.businessDashboard },
     { label: 'Dispatch' },
   ],
+  [ROUTES.businessRoutes]: [
+    { label: 'Dashboard', href: ROUTES.businessDashboard },
+    { label: 'Routes' },
+  ],
   [ROUTES.businessDeliveryFlow]: [
     { label: 'Dashboard', href: ROUTES.businessDashboard },
     { label: 'Delivery flow' },
@@ -37,6 +41,10 @@ const STATIC_TRAILS = {
     { label: 'Dashboard', href: ROUTES.businessDashboard },
     { label: 'Communications' },
   ],
+  [ROUTES.businessAnalytics]: [
+    { label: 'Dashboard', href: ROUTES.businessDashboard },
+    { label: 'Analytics' },
+  ],
   [ROUTES.companySetup]: [
     { label: 'Dashboard', href: ROUTES.businessDashboard },
     { label: 'Company setup' },
@@ -48,6 +56,13 @@ export function clientBreadcrumbs(pathname) {
   const path = pathname.replace(/\/+$/, '') || '/'
   if (STATIC_TRAILS[path]) return STATIC_TRAILS[path]
 
+  if (path.startsWith('/business/routes/')) {
+    return [
+      { label: 'Dashboard', href: ROUTES.businessDashboard },
+      { label: 'Routes', href: ROUTES.businessRoutes },
+      { label: 'Route monitor' },
+    ]
+  }
   if (path.startsWith('/business/deliveries/')) {
     return [
       { label: 'Dashboard', href: ROUTES.businessDashboard },

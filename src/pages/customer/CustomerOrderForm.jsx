@@ -90,6 +90,10 @@ export default function CustomerOrderForm() {
 
   const onSubmit = useCallback(
     async (values) => {
+      if (!photo) {
+        setError('Add a photo of the package before submitting.')
+        return
+      }
       setSubmitting(true)
       setError('')
       try {
@@ -236,7 +240,7 @@ export default function CustomerOrderForm() {
             <FormField label="Package value (₦)" htmlFor="declaredValue" error={errors.declaredValue?.message} required>
               <Input id="declaredValue" inputMode="numeric" error={!!errors.declaredValue} {...register('declaredValue')} />
             </FormField>
-            <FormField label="Package photo" htmlFor="packagePhoto" hint="Optional, auto-compressed to save data">
+            <FormField label="Package photo" htmlFor="packagePhoto" hint="Required · auto-compressed to save data" required>
               <div>
                 <label
                   htmlFor="packagePhoto"

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router'
 import {
   ArrowDown,
   ArrowUp,
@@ -25,6 +26,7 @@ import {
   saveDispatchSequence,
 } from '../../../lib/api'
 import Pagination from '../../../components/ui/Pagination'
+import { ROUTES } from '../../../lib/routes'
 
 const READY_PAGE_SIZE = 10
 const BATCH_TASKS_COLLAPSED = 6
@@ -212,9 +214,16 @@ export default function Dispatch() {
             Select ready deliveries, then group them by zone and confirm a rider in the dispatch workspace.
           </p>
         </div>
-        <Button variant="secondary" size="sm" onClick={load}>
-          <RefreshCw size={14} className="active:rotate-180" /> Refresh
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Link to={ROUTES.businessRoutes}>
+            <Button variant="secondary" size="sm">
+              <Route size={14} /> View routes in progress
+            </Button>
+          </Link>
+          <Button variant="secondary" size="sm" onClick={load}>
+            <RefreshCw size={14} className="active:rotate-180" /> Refresh
+          </Button>
+        </div>
       </header>
 
       {error && <Alert tone="error">{error}</Alert>}

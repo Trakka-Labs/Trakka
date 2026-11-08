@@ -113,8 +113,22 @@ export async function createDelivery(payload) {
 }
 
 // Returns the paginated payload: { deliveries, total, page, pageSize }.
-export async function getDeliveries({ page = 1, pageSize = 20 } = {}) {
-  return request(`/orders?page=${page}&pageSize=${pageSize}`)
+export async function getDeliveries({
+  page = 1,
+  pageSize = 20,
+  status,
+  driverId,
+  serviceType,
+  from,
+  to,
+} = {}) {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+  if (status) params.set('status', status)
+  if (driverId) params.set('driverId', driverId)
+  if (serviceType) params.set('serviceType', serviceType)
+  if (from) params.set('from', from)
+  if (to) params.set('to', to)
+  return request(`/orders?${params.toString()}`)
 }
 
 export async function getDelivery(deliveryId) {
@@ -124,6 +138,11 @@ export async function getDelivery(deliveryId) {
 
 export function getDashboard() {
   return request('/dashboard')
+}
+
+export async function getAnalytics() {
+  const { analytics } = await request('/analytics')
+  return analytics
 }
 
 export function getBreadcrumbs(path) {
@@ -143,6 +162,18 @@ export function getDispatchWorkspace() {
   return request('/dispatch')
 }
 
+export async function getRouteRuns() {
+  const { routes } = await request('/dispatch/routes')
+  return routes
+}
+
+export async function getRouteRunMonitor(routeRunId) {
+  const { route } = await request(
+    `/dispatch/routes/${encodeURIComponent(routeRunId)}`,
+  )
+  return route
+}
+
 export function getDrivers({ page = 1, pageSize = 20 } = {}) {
   return request(`/drivers?page=${page}&pageSize=${pageSize}`)
 }
@@ -157,6 +188,20 @@ export function createDriver(payload) {
   return request('/drivers', {
     method: 'POST',
     body: json(payload),
+  })
+}
+
+export function updateDriver(driverId, payload) {
+  return request(`/drivers/${driverId}`, {
+    method: 'PATCH',
+    body: json(payload),
+  })
+}
+
+export function setDriverStatus(driverId, status) {
+  return request(`/drivers/${driverId}/status`, {
+    method: 'POST',
+    body: json({ status }),
   })
 }
 
@@ -261,6 +306,20 @@ export function submitCustomerOrder(token, payload) {
 
 export function getTracking(token) {
   return request(`/track/${encodeURIComponent(token)}`)
+}
+
+export function verifyDeliveryQr(token) {
+  return request('/track/verify-qr', {
+    method: 'POST',
+    body: json({ token }),
+  })
+}
+
+export function submitDeliveryFeedback(token, payload) {
+  return request(`/track/${encodeURIComponent(token)}/feedback`, {
+    method: 'POST',
+    body: json(payload),
+  })
 }
 
 // -------------------------------------------------------------- rider (ops)

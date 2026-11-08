@@ -18,6 +18,13 @@ export default function Breadcrumbs({ className = '' }) {
   useEffect(() => {
     let cancelled = false
     setItems(clientBreadcrumbs(path))
+    // Only business pages have an authenticated server trail; rider/customer
+    // pages are token surfaces and must not fire an unauthorised request.
+    if (!path.startsWith('/business')) {
+      return () => {
+        cancelled = true
+      }
+    }
     getBreadcrumbs(path)
       .then((result) => {
         if (cancelled) return

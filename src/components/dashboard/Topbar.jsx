@@ -5,7 +5,8 @@ import { Bell, ChevronDown, LogOut, Menu, Search } from 'lucide-react'
 import { Link } from 'react-router'
 import ThemeToggle from '../ui/ThemeToggle'
 import GlobalSearch from './GlobalSearch'
-import { logoutBusiness } from '../../lib/api'
+import { getTrackingAlerts, logoutBusiness } from '../../lib/api'
+import { relativeTime } from '../../lib/formatDate'
 import { ROUTES } from '../../lib/routes'
 
 function initials(name = '') {
@@ -22,10 +23,48 @@ export default function Topbar({ companyName, onMenuClick }) {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [alerts, setAlerts] = useState([])
 
   const handleSignOut = async () => {
     await logoutBusiness().catch(() => undefined)
     navigate(ROUTES.businessLogin)
+  }
+
+  useEffect(() => {
+    let cancelled = false
+    const load = () =>
+      getTrackingAlerts()
+        .then((result) => {
+          if (!cancelled) setAlerts(result.alerts ?? [])
+        })
+        .catch(() => undefined)
+    load()
+    const timer = window.setInterval(load, 60_000)
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+    }
+  }, [])
+
+  const alertText = (alert) => {
+    const tracking = alert.payload?.trackingId
+    switch (alert.eventType) {
+      case 'order.created':
+        return `New order${tracking ? ` ${tracking}` : ''} received`
+      case 'order.delivered':
+        return `Delivery${tracking ? ` ${tracking}` : ''} completed`
+      case 'rider.assignment.accepted':
+        return 'A rider accepted a dispatch'
+      case 'rider.assignment.rejected':
+        return 'A rider declined a dispatch'
+      case 'route.delay_reported':
+        return 'A rider reported a delay'
+      case 'route.off_route':
+        return 'A rider appears to be off route'
+      default:
+        return 'Route update'
+    }
   }
 
   // Global hotkeys: "/" or ⌘K/Ctrl+K opens search (when not already typing).
@@ -103,13 +142,61 @@ export default function Topbar({ companyName, onMenuClick }) {
 
         <div className="ml-auto flex items-center gap-2 lg:ml-2">
           <ThemeToggle className="hidden sm:inline-flex" />
-        <button
-          type="button"
-          className="relative flex h-9 w-9 items-center justify-center rounded-xl text-[var(--color-paper-dim)] hover:bg-[var(--soft-hover)] hover:text-[var(--color-paper)]"
-          aria-label="Notifications"
-        >
-          <Bell size={17} />
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setNotificationsOpen((value) => !value)}
+            className="relative flex h-9 w-9 items-center justify-center rounded-xl text-[var(--color-paper-dim)] hover:bg-[var(--soft-hover)] hover:text-[var(--color-paper)]"
+            aria-label={`Notifications${alerts.length ? `, ${alerts.length} unread` : ''}`}
+            aria-expanded={notificationsOpen}
+          >
+            <Bell size={17} />
+            {alerts.length > 0 && (
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--color-dispatch-orange)]" />
+            )}
+          </button>
+          <AnimatePresence>
+            {notificationsOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setNotificationsOpen(false)}
+                  aria-hidden="true"
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 z-20 mt-2 w-80 overflow-hidden rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-raised)] shadow-2xl"
+                >
+                  <div className="border-b border-[var(--color-border-subtle)] px-4 py-3">
+                    <p className="text-sm font-semibold text-[var(--color-paper)]">Notifications</p>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {!alerts.length ? (
+                      <p className="px-4 py-6 text-center text-xs text-[var(--color-paper-faint)]">
+                        Nothing new right now.
+                      </p>
+                    ) : (
+                      alerts.map((alert) => (
+                        <div
+                          key={alert.id}
+                          className="border-b border-[var(--color-border-subtle)] px-4 py-3 last:border-0"
+                        >
+                          <p className="text-xs text-[var(--color-paper)]">{alertText(alert)}</p>
+                          <p className="mt-1 text-[10px] text-[var(--color-paper-faint)]">
+                            {relativeTime(alert.occurredAt)}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
 
         <div className="relative">
           <button

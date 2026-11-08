@@ -10,6 +10,8 @@ import useBusy from '../../../hooks/useBusy'
 import {
   createDriver,
   getDrivers,
+  setDriverStatus,
+  updateDriver,
   updateDriverCapacity,
 } from '../../../lib/api'
 
@@ -26,6 +28,8 @@ export default function Drivers() {
   const [busyPage, setBusyPage] = useState(false)
   const [form, setForm] = useState(EMPTY_DRIVER)
   const [capacityDrafts, setCapacityDrafts] = useState({})
+  const [editing, setEditing] = useState('')
+  const [editForm, setEditForm] = useState({ displayName: '', phone: '' })
   const [busy, withBusy] = useBusy()
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -74,6 +78,42 @@ export default function Drivers() {
       `${form.displayName} was added to your driver team.`,
     )
     if (created) setForm(EMPTY_DRIVER)
+  }
+
+  const beginEdit = (driver) => {
+    setEditing(driver.id)
+    setEditForm({ displayName: driver.displayName, phone: driver.phone.replace(/^\+234/, '0') })
+  }
+
+  const saveEdit = (driver) => {
+    const displayName = editForm.displayName.trim()
+    const phone = editForm.phone.replace(/\D/g, '')
+    if (displayName.length < 2) {
+      setError('Driver name must be at least 2 characters.')
+      return
+    }
+    if (phone.length < 10 || phone.length > 15) {
+      setError('Phone must contain 10 to 15 digits.')
+      return
+    }
+    run(
+      `edit-${driver.id}`,
+      () => updateDriver(driver.id, { displayName, phone }),
+      `${displayName}'s details were updated.`,
+    ).then((saved) => {
+      if (saved) setEditing('')
+    })
+  }
+
+  const toggleStatus = (driver) => {
+    const next = driver.riderStatus === 'disabled' ? 'active' : 'disabled'
+    run(
+      `status-${driver.id}`,
+      () => setDriverStatus(driver.id, next),
+      next === 'active'
+        ? `${driver.displayName} can receive dispatches again.`
+        : `${driver.displayName} was disabled and will not receive dispatches.`,
+    )
   }
 
   const saveCapacity = (driver) => {
@@ -220,13 +260,55 @@ export default function Drivers() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="truncate text-sm font-semibold text-[var(--color-paper)]">{driver.displayName}</h3>
-                      <Badge tone={driver.available ? 'emerald' : 'orange'}>
-                        {driver.available ? 'AVAILABLE' : 'ASSIGNED'}
+                      <Badge
+                        tone={
+                          driver.riderStatus === 'disabled'
+                            ? 'neutral'
+                            : driver.available
+                              ? 'emerald'
+                              : 'orange'
+                        }
+                      >
+                        {driver.riderStatus === 'disabled'
+                          ? 'DISABLED'
+                          : driver.available
+                            ? 'AVAILABLE'
+                            : 'ASSIGNED'}
                       </Badge>
                     </div>
                     <p className="mt-1 flex items-center gap-1.5 text-xs text-[var(--color-paper-faint)]">
                       <Phone size={12} /> {driver.phone}
                     </p>
+                    {editing === driver.id && (
+                      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]">
+                        <Input
+                          aria-label="Driver name"
+                          value={editForm.displayName}
+                          onChange={(event) =>
+                            setEditForm({ ...editForm, displayName: event.target.value })
+                          }
+                        />
+                        <Input
+                          aria-label="Driver phone"
+                          integerOnly
+                          maxDigits={15}
+                          value={editForm.phone}
+                          onChange={(event) =>
+                            setEditForm({ ...editForm, phone: event.target.value })
+                          }
+                        />
+                        <Button
+                          size="sm"
+                          disabled={busy === `edit-${driver.id}`}
+                          onClick={() => saveEdit(driver)}
+                        >
+                          Save
+                        </Button>
+                        <Button size="sm" variant="secondary" onClick={() => setEditing('')}>
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -252,6 +334,21 @@ export default function Drivers() {
                     onClick={() => saveCapacity(driver)}
                   >
                     Save
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => beginEdit(driver)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy === `status-${driver.id}`}
+                    onClick={() => toggleStatus(driver)}
+                  >
+                    {driver.riderStatus === 'disabled' ? 'Reactivate' : 'Disable'}
                   </Button>
                 </div>
               </article>

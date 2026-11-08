@@ -17,14 +17,18 @@ const Deliveries = lazy(() => import('./pages/business/dashboard/Deliveries'))
 const DeliveryDetails = lazy(() => import('./pages/business/dashboard/DeliveryDetails'))
 const CreateDelivery = lazy(() => import('./pages/business/dashboard/CreateDelivery'))
 const Dispatch = lazy(() => import('./pages/business/dashboard/Dispatch'))
+const BusinessRoutes = lazy(() => import('./pages/business/dashboard/Routes'))
+const RouteMonitor = lazy(() => import('./pages/business/dashboard/RouteMonitor'))
 const DeliveryFlow = lazy(() => import('./pages/business/dashboard/DeliveryFlow'))
 const ActivityFeed = lazy(() => import('./pages/business/dashboard/ActivityFeed'))
 const Drivers = lazy(() => import('./pages/business/dashboard/Drivers'))
 const Communications = lazy(() => import('./pages/business/dashboard/Communications'))
+const Reports = lazy(() => import('./pages/business/dashboard/Reports'))
 const RiderDashboard = lazy(() => import('./pages/rider/RiderDashboard'))
 const RiderRouteMessages = lazy(() => import('./pages/rider/RiderRouteMessages'))
 const CustomerOrderForm = lazy(() => import('./pages/customer/CustomerOrderForm'))
 const TrackingPage = lazy(() => import('./pages/customer/TrackingPage'))
+const VerifyDelivery = lazy(() => import('./pages/customer/VerifyDelivery'))
 const CustomerDashboard = lazy(() => import('./pages/customer/CustomerDashboard'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
@@ -64,6 +68,12 @@ export function AppRoutes() {
         <Route path={ROUTES.businessDispatch} element={<DashboardLayout />}>
           <Route index element={<Dispatch />} />
         </Route>
+        <Route path={ROUTES.businessRoutes} element={<DashboardLayout />}>
+          <Route index element={<BusinessRoutes />} />
+        </Route>
+        <Route path={ROUTES.businessRouteDetails} element={<DashboardLayout />}>
+          <Route index element={<RouteMonitor />} />
+        </Route>
         <Route path={ROUTES.businessDeliveryFlow} element={<DashboardLayout />}>
           <Route index element={<DeliveryFlow />} />
         </Route>
@@ -76,10 +86,14 @@ export function AppRoutes() {
         <Route path={ROUTES.businessCommunications} element={<DashboardLayout />}>
           <Route index element={<Communications />} />
         </Route>
+        <Route path={ROUTES.businessAnalytics} element={<DashboardLayout />}>
+          <Route index element={<Reports />} />
+        </Route>
         <Route path={ROUTES.riderDashboard} element={<RiderDashboard />} />
         <Route path={ROUTES.riderRouteMessages} element={<RiderRouteMessages />} />
         <Route path={ROUTES.customerOrderIntake} element={<CustomerOrderForm />} />
         <Route path={ROUTES.customerTracking} element={<TrackingPage />} />
+        <Route path={ROUTES.customerVerify} element={<VerifyDelivery />} />
         <Route path={ROUTES.customerDashboard} element={<CustomerDashboard />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { label: 'Drivers', icon: Users, to: ROUTES.businessDrivers },
   { label: 'Communications', icon: MessageSquareText, to: ROUTES.businessCommunications },
   { label: 'Payments', icon: Wallet },
-  { label: 'Analytics', icon: BarChart3 },
+  { label: 'Analytics', icon: BarChart3, to: ROUTES.businessAnalytics },
   { label: 'Settings', icon: Settings },
 ]
 
