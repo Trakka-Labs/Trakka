@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router'
 import { CheckCircle2, Clock3, Package, Truck } from 'lucide-react'
 import OperationsFlow from '../../../components/dashboard/OperationsFlow'
+import SetupChecklist from '../../../components/dashboard/SetupChecklist'
 import RecentActivity from '../../../components/dashboard/RecentActivity'
 import Loader from '../../../components/ui/Loader'
 import Alert from '../../../components/ui/Alert'
@@ -33,7 +34,7 @@ const METRIC_CONFIG = [
 
 function StatCards({ metrics }) {
   return (
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <section data-tour="stats" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {METRIC_CONFIG.map(({ key, label, icon: Icon, chip, live, caption }) => (
         <div
           key={key}
@@ -68,7 +69,7 @@ function StatCards({ metrics }) {
 
 
 export default function DashboardOverview() {
-  const { session } = useOutletContext()
+  const { session, onboarding } = useOutletContext()
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
 
@@ -107,6 +108,10 @@ export default function DashboardOverview() {
 
   return (
     <div>
+      <SetupChecklist
+        status={onboarding?.status}
+        onDismiss={onboarding?.dismissChecklist}
+      />
       <header className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-dispatch-orange)]">

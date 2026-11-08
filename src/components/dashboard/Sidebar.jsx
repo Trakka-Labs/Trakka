@@ -6,9 +6,9 @@ import { ROUTES } from '../../lib/routes'
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, to: ROUTES.businessDashboard },
-  { label: 'Deliveries', icon: Package, to: ROUTES.businessDeliveries, matchChildren: true },
-  { label: 'Dispatch', icon: RouteIcon, to: ROUTES.businessDispatch },
-  { label: 'Drivers', icon: Users, to: ROUTES.businessDrivers },
+  { label: 'Deliveries', icon: Package, to: ROUTES.businessDeliveries, matchChildren: true, tour: 'nav-deliveries' },
+  { label: 'Dispatch', icon: RouteIcon, to: ROUTES.businessDispatch, tour: 'nav-dispatch' },
+  { label: 'Drivers', icon: Users, to: ROUTES.businessDrivers, tour: 'nav-drivers' },
   { label: 'Communications', icon: MessageSquareText, to: ROUTES.businessCommunications },
   { label: 'Payments', icon: Wallet },
   { label: 'Analytics', icon: BarChart3, to: ROUTES.businessAnalytics },
@@ -19,7 +19,7 @@ function NavList({ onNavigate }) {
   const location = useLocation()
 
   return (
-    <nav className="flex flex-1 flex-col gap-1 px-3">
+    <nav className="flex flex-1 flex-col gap-1 px-3" data-tour="sidebar">
       {NAV_ITEMS.map((item) => {
         const Icon = item.icon
         if (item.to) {
@@ -31,6 +31,7 @@ function NavList({ onNavigate }) {
               key={item.label}
               to={item.to}
               onClick={onNavigate}
+              data-tour={item.tour}
               aria-current={isActive ? 'page' : undefined}
               className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors ${
                 isActive

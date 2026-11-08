@@ -339,7 +339,27 @@ export default function Deliveries() {
           description={
             hasFilters
               ? 'Try clearing one or more filters to widen the register.'
-              : 'Created deliveries will appear here in newest-first order.'
+              : 'Create your first delivery and Trakka generates the tracking ID for you.'
+          }
+          action={
+            hasFilters ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setPage(1)
+                  setFilters(EMPTY_FILTERS)
+                }}
+              >
+                Clear filters
+              </Button>
+            ) : (
+              <Link to={ROUTES.businessCreateDelivery}>
+                <Button size="sm">
+                  <Plus size={14} /> Create delivery
+                </Button>
+              </Link>
+            )
           }
         />
       )}

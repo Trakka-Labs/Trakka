@@ -3,14 +3,17 @@ import { Outlet, useNavigate } from 'react-router'
 import { DesktopSidebar, MobileDrawer } from './Sidebar'
 import Topbar from './Topbar'
 import Breadcrumbs from '../ui/Breadcrumbs'
+import CoachTour from './CoachTour'
 import Loader from '../ui/Loader'
 import { getCurrentAccount } from '../../lib/api'
 import { ROUTES } from '../../lib/routes'
+import useOnboarding from '../../hooks/useOnboarding'
 
 export default function DashboardLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [session, setSession] = useState(null)
   const navigate = useNavigate()
+  const onboarding = useOnboarding()
 
   useEffect(() => {
     let cancelled = false
@@ -46,9 +49,10 @@ export default function DashboardLayout() {
         <Topbar companyName={session.companyName} onMenuClick={() => setDrawerOpen(true)} />
         <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-5 sm:px-6 lg:px-10 lg:py-8">
           <Breadcrumbs className="mb-4" />
-          <Outlet context={{ session }} />
+          <Outlet context={{ session, onboarding }} />
         </main>
       </div>
+      <CoachTour status={onboarding.status} onFinish={onboarding.markTourSeen} />
     </div>
   )
 }

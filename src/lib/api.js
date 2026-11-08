@@ -140,6 +140,17 @@ export function getDashboard() {
   return request('/dashboard')
 }
 
+export function getOnboardingStatus() {
+  return request('/onboarding/status')
+}
+
+export function markOnboarding(action) {
+  return request('/onboarding/status', {
+    method: 'PATCH',
+    body: json({ action }),
+  })
+}
+
 export async function getAnalytics() {
   const { analytics } = await request('/analytics')
   return analytics

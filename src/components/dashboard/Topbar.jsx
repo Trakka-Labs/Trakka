@@ -149,6 +149,7 @@ export default function Topbar({ companyName, onMenuClick }) {
             className="relative flex h-9 w-9 items-center justify-center rounded-xl text-[var(--color-paper-dim)] hover:bg-[var(--soft-hover)] hover:text-[var(--color-paper)]"
             aria-label={`Notifications${alerts.length ? `, ${alerts.length} unread` : ''}`}
             aria-expanded={notificationsOpen}
+            data-tour="notifications"
           >
             <Bell size={17} />
             {alerts.length > 0 && (
