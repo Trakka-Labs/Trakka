@@ -18,6 +18,7 @@ dist-ssr
 .env.*
 !.env.example
 !.env.*.example
+.env.local.example
 
 # Vercel project metadata
 .vercel
