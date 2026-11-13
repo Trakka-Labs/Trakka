@@ -1,5 +1,5 @@
-import StitchLanding from '../components/landing/StitchLanding'
+import HomeLanding from '../components/landing/HomeLanding'
 
 export default function Landing() {
-  return <StitchLanding />
+  return <HomeLanding />
 }

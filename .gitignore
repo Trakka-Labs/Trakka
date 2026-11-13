@@ -39,3 +39,6 @@ test-results
 *.njsproj
 *.sln
 *.sw?
+
+# Local design-review artifacts
+.taste-skill/
