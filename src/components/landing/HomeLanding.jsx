@@ -8,7 +8,6 @@ import {
   MapPin,
   Menu,
   Navigation,
-  PlayCircle,
   QrCode,
   Radar,
   ShieldCheck,
@@ -90,14 +89,8 @@ const SAFEGUARDS = [
 function Brand({ light = false }) {
   return (
     <span className={`lp-brand${light ? ' lp-brand--light' : ''}`}>
-      <span className="lp-brand__tile">
-        <Logo size={22} />
-        <i aria-hidden="true" />
-      </span>
-      <span className="lp-brand__text">
-        <strong>Trakka</strong>
-        <em>Logistics OS</em>
-      </span>
+      <Logo size={28} />
+      <span className="lp-brand__name">Trakka</span>
     </span>
   )
 }
